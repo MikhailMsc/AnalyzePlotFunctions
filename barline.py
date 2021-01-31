@@ -86,7 +86,7 @@ def var_stat(data: pd.DataFrame, var: str, target: str = None, binargs: dict = d
 
     data.reset_index(inplace=True)
     data.columns = ['Number', 'Name', 'Total', 'Bads', 'Population(%)', 'Target Rate(%)', 'WoE', 'Group_IV',
-                    'Total_IV'] if target else ['Name', 'Total', 'Population(%)']
+                    'Total_IV'] if target else ['Number', 'Name', 'Total', 'Population(%)']
 
     if plot:
         with plt.style.context(plot_config.style):
@@ -101,15 +101,16 @@ def var_stat(data: pd.DataFrame, var: str, target: str = None, binargs: dict = d
 
             if target:
                 ax2 = ax1.twinx()
-                #sns.pointplot(x='Number', y='Target Rate(%)', data=data, ax=ax2, color=plot_config.color2)
                 sns.pointplot(x=xticks, y='Target Rate(%)', data=data, ax=ax2, color=plot_config.color2)
+            else:
+                ax2 = None
 
             if annotation:
                 for i in range(data.shape[0]):
                     x = data.loc[i, 'Number']
                     pop = round(data.loc[i, 'Population(%)'], 1)
                     rate = round(data.loc[i, 'Target Rate(%)'] if target else 0, 1)
-                    lb = f'Rate={rate}%\nPop-n={pop}%' if target else 'Pop-n={pop}%'
+                    lb = f'Rate={rate}%\nPop-n={pop}%' if target else f'Pop-n={pop}%'
                     y = pop + plot_config.annotation_delta
                     ax1.text(x, y, lb, ha='center', size=plot_config.annotation_font_size)
 

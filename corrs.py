@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 
 
-def cramer_stat(var1: pd.Series, var2: pd.Series, method: "old, new" = 'old') -> np.float64:
+def cramer_stat(var1: pd.Series, var2: pd.Series, method: "old, new" = 'new') -> np.float64:
     """
     Calculate Cramers V statistic for categorial-categorial association.
     There 2 methods: old - usual, new - correction from Bergsma, Wicher
@@ -110,8 +110,8 @@ def order_corr(matrix:pd.DataFrame, method='complete', metric='euclidean'):
 
 
 def plot_corr(matrix: pd.DataFrame, annotation: bool = False, reorder: bool = False,
-              method='single', metric='euclidean', triangle: bool = None, rnd: int = 1,
-              plot_config: PlotConfig = None):
+              method='single', metric='euclidean', triangle: str = None, colorbar: bool = True,
+              rnd: int = 1, plot_config: PlotConfig = None):
     """
     Plot correlation matrix.
     methods : single, complete, average, weighted, centroid, median, ward...
@@ -126,6 +126,10 @@ def plot_corr(matrix: pd.DataFrame, annotation: bool = False, reorder: bool = Fa
     :param rnd: Round level for annotation values (default 1)
     :param plot_config: Configuration for plot
     :return: None
+
+    Parameters
+    ----------
+    cbar
     """
     base_config = BASE_CONFIG.__copy__()
     if matrix.min().min() >= 0:
@@ -163,22 +167,25 @@ def plot_corr(matrix: pd.DataFrame, annotation: bool = False, reorder: bool = Fa
             annot_kws={'size': plot_config.annotation_font_size}, fmt='.{}f'.format(rnd),
             ax=ax)
 
-        if plot_config.cbar_location in ['right', 'left']:
-            cbar_orientation = 'vertical'
-        else:
-            cbar_orientation = 'horizontal'
+        if colorbar:
+            if plot_config.cbar_location in ['right', 'left']:
+                cbar_orientation = 'vertical'
+            else:
+                cbar_orientation = 'horizontal'
 
-        ax_divider = make_axes_locatable(ax)
-        cax = ax_divider.append_axes(
-            plot_config.cbar_location,
-            size='{}%'.format(plot_config.cbar_width),
-            pad='{}%'.format(plot_config.cbar_pad)
-        )
-        plt.colorbar(ax.get_children()[0], cax=cax, orientation=cbar_orientation)
-        if cbar_orientation == 'horizontal':
-            cax.yaxis.set_visible(False)
+            ax_divider = make_axes_locatable(ax)
+            cax = ax_divider.append_axes(
+                plot_config.cbar_location,
+                size='{}%'.format(plot_config.cbar_width),
+                pad='{}%'.format(plot_config.cbar_pad)
+            )
+            plt.colorbar(ax.get_children()[0], cax=cax, orientation=cbar_orientation)
+            if cbar_orientation == 'horizontal':
+                cax.yaxis.set_visible(False)
+            else:
+                cax.xaxis.set_visible(False)
         else:
-            cax.xaxis.set_visible(False)
+            cax = None
 
         plot_config.appy_configs(fig=fig, ax=ax, cax=cax)
         plt.show()

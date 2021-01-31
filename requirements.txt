@@ -2,6 +2,5 @@ matplotlib
 numpy
 pandas
 scipy
-# mpl_toolkits
 seaborn
 scikit-learn

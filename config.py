@@ -39,13 +39,19 @@ class PlotConfig:
             y2_color=None,
             ymax=None,
             ymin=None,
+            xmax=None,
+            xmin=None,
             y2min=None,
             y2max=None,
             width_ratios=None,
             height_ratios=None,
-            wspace=None,
+            space=None,
             bar_width=None,
-            side_grid=None
+            side_grid=None,
+            legend_loc=None,
+            legend=None,
+            legend_size=None
+
     ):
         """
 
@@ -124,12 +130,18 @@ class PlotConfig:
         self.ymin = ymin
         self.y2min = y2min
         self.y2max = y2max
+        self.xmax = xmax
+        self.xmin = xmin
 
         self.width_ratios = width_ratios
         self.height_ratios = height_ratios
-        self.wspace = wspace
+        self.space = space
         self.bar_width = bar_width
         self.side_grid = side_grid
+        self.legend_loc = legend_loc
+        self.legend = legend
+        self.legend_size = legend_size
+
 
     def merge_other_config(self, config):
         all_attr = self.__dict__.keys()
@@ -193,6 +205,14 @@ class PlotConfig:
                 ax.set_ylim(top=self.ymax)
             if self.ymin is not None:
                 ax.set_ylim(bottom=self.ymin)
+
+            if self.xmax is not None:
+                ax.set_xlim(right=self.xmax)
+            if self.xmin is not None:
+                ax.set_xlim(left=self.xmin)
+
+            if self.legend:
+                ax.legend(bbox_to_anchor=self.legend_loc, prop={'size': self.legend_size})
 
         if cax:
             if self.cbar_tick_loc == 'right':
