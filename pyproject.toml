@@ -1,0 +1,27 @@
+[project]
+name = "analyzer"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "MikhailMsc", email = "puryginm@gmail.com"},
+]
+dependencies = []
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+lint = [
+    "ruff>=0.9.9",
+]
+test = [
+    "pytest>=8.3.5",
+]
