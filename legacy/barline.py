@@ -3,7 +3,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
 import seaborn as sns
-from utils import reorder_palette
+from utils.framework_depends import reorder_palette
 from binning import bin_variable
 
 

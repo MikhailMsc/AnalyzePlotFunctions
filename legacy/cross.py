@@ -6,7 +6,7 @@ import seaborn as sns
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import matplotlib.gridspec as grd
 
-from utils import split_palette
+from utils.framework_depends import split_palette
 
 
 def cross_var_plot(data, var1, var2, target=None, aggfunc=lambda x: np.mean(x) * 100,

@@ -5,7 +5,13 @@ description = "Default template for PDM package"
 authors = [
     {name = "MikhailMsc", email = "puryginm@gmail.com"},
 ]
-dependencies = []
+dependencies = [
+    "polars>=1.24.0",
+    "pandas>=2.2.3",
+    "pyspark>=3.5.5",
+    "pyarrow>=19.0.1",
+    "scikit-learn>=1.6.1",
+]
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
@@ -14,14 +20,15 @@ license = {text = "MIT"}
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
-
 [tool.pdm]
 distribution = true
 
-[tool.pdm.dev-dependencies]
+
+[dependency-groups]
+test = [
+    "pytest",
+]
 lint = [
     "ruff>=0.9.9",
-]
-test = [
     "pytest>=8.3.5",
 ]
