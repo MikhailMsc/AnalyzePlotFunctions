@@ -8,17 +8,17 @@ def round_series(series: Series, rnd: int) -> Series:
 
 
 def _round_series_pandas(series: Series, rnd: int) -> Series:
-    series = series.roud(rnd)
+    series = series.round(rnd)
     return series
 
 
 def _round_series_polars(series: Series, rnd: int) -> Series:
-    series = series.roud(rnd)
+    series = series.round(rnd)
     return series
 
 
 def _round_series_pyspark(series: Series, rnd: int) -> Series:
-    series = series.roud(rnd)
+    series = series.round(rnd)
     return series
 
 

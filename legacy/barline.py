@@ -44,7 +44,7 @@ def var_stat(data: pd.DataFrame, var: str, target: str = None, binargs: dict = d
         binned = False
     else:
         binargs = {
-            **{'target': data[target] if target else None, 'return_points': True},
+            **{'target_name': data[target] if target else None, 'return_points': True},
             **binargs}
         points, data['bin'] = bin_variable(data[var], **binargs)
         binned = True

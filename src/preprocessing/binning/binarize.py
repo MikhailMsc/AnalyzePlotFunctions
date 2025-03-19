@@ -1,4 +1,8 @@
+from dataclasses import dataclass
+from typing import List, Union
+
 from utils.domain.const import MIN, MAX, MISSING, NOT_MISSING
+from utils.domain.validate import validate_column_for_binning
 from utils.general.types import Series, FrameWork, get_framework_from_series
 
 from utils.general.utils import pretty_number
@@ -6,13 +10,24 @@ from utils.general.utils import pretty_number
 from .cutoffs import get_var_cutoffs
 
 
+@dataclass
+class BinningParams:
+    # Предопределенный бинниг
+    cutoffs: List[Union[int, float]] = None
+
+    # Расчетный биннинг
+    min_prc: float = 5.0  # Минимальный размер группы
+    rnd: int = None       # Округление перед биннингом
+
+
 def binarize_series(
         variable: Series, cutoffs: list = None, target: Series = None, min_prc: float = 5.0,
-        rnd: int = None, validate_target: bool = True
+        rnd: int = None, validate_target: bool = True, _var_name: str = ''
 ) -> Series:
     if cutoffs is None:
         cutoffs = get_var_cutoffs(variable, target, min_prc, rnd, validate_target)
     else:
+        validate_column_for_binning(variable, _var_name)
         cutoffs = [MIN, ] + cutoffs + [MAX,]
 
     framework = get_framework_from_series(variable)
@@ -43,11 +58,11 @@ def _apply_cutoffs_pandas(series: Series, cutoffs: list):
             if i == 0:
                 continue
             elif i == 1:
-                labels.append(f'<={p}')
+                labels.append(f'<= {p}')
             else:
                 labels.append(f'({pretty_number(cutoffs[i-1])}; {p}]')
 
-        labels[-1] = f'>{pretty_number(cutoffs[-2])}'
+        labels[-1] = f'> {pretty_number(cutoffs[-2])}'
 
         cutoffs[0] = -np.inf
         cutoffs[-1] = np.inf
@@ -80,11 +95,11 @@ def _apply_cutoffs_polars(series: Series, cutoffs: list):
             if i == 0:
                 continue
             elif i == 1:
-                labels.append(f'<={p}')
+                labels.append(f'<= {p}')
             else:
                 labels.append(f'({pretty_number(cutoffs[i - 1])}; {p}]')
 
-        labels[-1] = f'>{pretty_number(cutoffs[-2])}'
+        labels[-1] = f'> {pretty_number(cutoffs[-2])}'
         cutoffs = cutoffs[1:-1]
 
         # labels = labels,
@@ -97,10 +112,14 @@ def _apply_cutoffs_polars(series: Series, cutoffs: list):
     return series
 
 
+def _apply_cutoffs_spark(series: Series, cutoffs: list):
+    raise NotImplementedError
+
+
 _MAP_FRAMEWORK_FUNC = {
     FrameWork.pandas: _apply_cutoffs_pandas,
     FrameWork.polars: _apply_cutoffs_polars,
-    # FrameWork.spark: _filter_missing_df_pyspark,
+    FrameWork.spark: _apply_cutoffs_spark,
 }
 
 

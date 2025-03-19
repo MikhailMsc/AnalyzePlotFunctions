@@ -5,40 +5,52 @@ from sklearn.tree import DecisionTreeClassifier
 
 from utils.domain.columns import C_VALUE, C_PERCENT, C_TARGET, C_COUNT
 from utils.domain.const import MIN, MAX
+from utils.domain.validate import validate_binary_target, validate_column_for_binning
 from utils.framework_depends import (
     SH_ValueCounts, value_counts, get_shape, round_series, filter_missing_df,
     series_to_list, len_series, get_max, get_unique, convert_df_to_pandas,
-    concat_series_to_frame, get_count_missing, get_columns
+    concat_series_to_frame, get_count_missing, get_columns, get_series_from_df
 )
+from utils.framework_depends.columns.is_numeric_column import is_numeric_column
 from utils.general.types import Series, DataFrame
-from utils.general.utils import get_accuracy
+from utils.general.utils import get_accuracy, pretty_round
 
 
 def get_all_vars_cutoffs(
-        df: DataFrame, columns: List[str] = None, target: str = None, min_prc: float = 5.0,
+        df: DataFrame, columns: List[str] = None, target_name: str = None, min_prc: float = 5.0,
         rnd: int = None
 ) -> Dict[str, list]:
-    if target is not None and get_unique(df[target]) != {0, 1}:
-        raise Exception('Таргет должен содержать значения 0 и 1, пропуски не допускаются.')
+    if target_name is not None:
+        validate_binary_target(get_series_from_df(df, target_name))
 
     if columns is None:
         columns = get_columns(df)
 
-    if target is not None:
-        columns = [col for col in columns if col != target]
-        target = df[target]
+    if target_name is not None:
+        columns = [col for col in columns if col != target_name]
+        target = df[target_name]
+    else:
+        target = None
 
-    vars_cutoffs = {col: get_var_cutoffs(df[col], target, min_prc, rnd, False) for col in columns}
+    vars_cutoffs = {
+        col: get_var_cutoffs(
+            get_series_from_df(df, col), target, min_prc, rnd,
+            False, col
+        )
+        for col in columns
+    }
     return vars_cutoffs
 
 
 def get_var_cutoffs(
         variable: Series, target: Series = None, min_prc: float = 5.0,
-        rnd: int = None, validate_target: bool = True
+        rnd: int = None, validate_target: bool = True, _var_name: str = ''
 ) -> list:
     """
     Расчет точек бинаризации переменной.
     """
+    validate_column_for_binning(variable, _var_name)
+
     min_prc = max(min_prc, 0.001)
     cnt_missing = get_count_missing(variable)
     cnt_total = len_series(variable)
@@ -46,9 +58,6 @@ def get_var_cutoffs(
 
     if 100 * cnt_not_missing/cnt_total < min_prc:
         return [MIN, MAX]
-
-    if rnd is not None:
-        variable = round_series(variable, rnd)
 
     stats = value_counts(variable, sort=True)
     max_prc = get_max(stats[C_PERCENT.n])
@@ -64,6 +73,10 @@ def get_var_cutoffs(
         cutoffs = _get_var_cutoffs_no_target(stats, min_prc)
     else:
         cutoffs = _get_var_cutoffs_with_target(variable, target, min_prc, validate_target)
+
+    if rnd is not None:
+        cutoffs = sorted(set([pretty_round(val, rnd) for val in cutoffs]))
+
     cutoffs = [MIN, ] + cutoffs + [MAX, ]
     return cutoffs
 
@@ -98,8 +111,8 @@ def _get_var_cutoffs_no_target(stats: SH_ValueCounts.t, min_prc: float) -> list:
 
 
 def _get_var_cutoffs_with_target(variable: Series, target: Series, min_prc: float, validate_target: bool) -> list:
-    if validate_target and get_unique(target) != {0, 1}:
-        raise Exception('Таргет должен содержать значения 0 и 1, пропуски не допускаются.')
+    if validate_target:
+        validate_binary_target(target)
 
     cnt_total_origin = len_series(variable)
     min_count = round(min_prc * cnt_total_origin / 100)

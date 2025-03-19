@@ -66,8 +66,8 @@ def correlation(data: pd.DataFrame, select_vars: list = None, ignore_vars: list 
             dtypes = data[select_vars].dtypes
             need_transform = [var for var in select_vars if 'float' in str(dtypes[var]) or 'int' in str(dtypes[var])]
             if need_transform:
-                if 'target' in binargs:
-                    binargs['target'] = data[binargs['target']]
+                if 'target_name' in binargs:
+                    binargs['target_name'] = data[binargs['target_name']]
                 binning = lambda x: bin_variable(x, **binargs)
                 data = data.copy()
                 data.loc[:, need_transform] = data.loc[:, need_transform].apply(binning, 0)

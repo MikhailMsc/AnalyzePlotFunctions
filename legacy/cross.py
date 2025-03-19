@@ -61,7 +61,7 @@ def cross_var_plot(data, var1, var2, target=None, aggfunc=lambda x: np.mean(x) *
     for var in [var1, var2]:
         if str(data[var].dtype) not in ['category', 'object']:
             binargs = {
-                **{'target': data[target] if target else None, 'return_points': False},
+                **{'target_name': data[target] if target else None, 'return_points': False},
                 **binargs}
             data[var] = bin_variable(data[var], **binargs)
         elif str(data[var].dtype) == 'object':
@@ -71,7 +71,7 @@ def cross_var_plot(data, var1, var2, target=None, aggfunc=lambda x: np.mean(x) *
     stat_frame = data.groupby([var1, var2])
     if target:
         stat_frame = stat_frame.agg({target: ['size', aggfunc]})
-        stat_frame.columns = ['size', 'target']
+        stat_frame.columns = ['size', 'target_name']
     else:
         stat_frame = stat_frame.size().to_frame('size')
 
@@ -79,7 +79,7 @@ def cross_var_plot(data, var1, var2, target=None, aggfunc=lambda x: np.mean(x) *
     stat_frame['prc'] = 100 * stat_frame['size'] / stat_frame['size'].sum()
 
     stat_frame = stat_frame[stat_frame['prc'] >= show_min]
-    tmp1 = stat_frame.pivot(var2, var1, 'target')
+    tmp1 = stat_frame.pivot(var2, var1, 'target_name')
     tmp2 = stat_frame.pivot(var2, var1, 'prc')
 
     labels = False
@@ -95,7 +95,7 @@ def cross_var_plot(data, var1, var2, target=None, aggfunc=lambda x: np.mean(x) *
                 indx = (stat_frame[var1] == lb1) & (stat_frame[var2] == lb2)
                 if indx.sum() > 0:
                     prc = 'Pop-n: {}'.format(rnd(stat_frame.loc[indx, 'prc'].values[0]))
-                    rate = 'Target: {}'.format(rnd(stat_frame.loc[indx, 'target'].values[0]))
+                    rate = 'Target: {}'.format(rnd(stat_frame.loc[indx, 'target_name'].values[0]))
                     lb = prc + '\n' + rate if target else prc
                     tmp_lbs.append(lb)
                 else:
@@ -130,8 +130,8 @@ def cross_var_plot(data, var1, var2, target=None, aggfunc=lambda x: np.mean(x) *
             if target:
                 stat_frame_v1 = stat_frame_v1.agg({target: ['size', aggfunc]})
                 stat_frame_v2 = stat_frame_v2.agg({target: ['size', aggfunc]})
-                stat_frame_v1.columns = ['size', 'target']
-                stat_frame_v2.columns = ['size', 'target']
+                stat_frame_v1.columns = ['size', 'target_name']
+                stat_frame_v2.columns = ['size', 'target_name']
             else:
                 stat_frame_v1 = stat_frame_v1.size().to_frame('size')
                 stat_frame_v2 = stat_frame_v2.size().to_frame('size')
@@ -144,7 +144,7 @@ def cross_var_plot(data, var1, var2, target=None, aggfunc=lambda x: np.mean(x) *
                 drop=True)
             stat_frame_v2 = stat_frame_v2[stat_frame_v2[var2].isin(list(stat_frame[var2].unique()))].reset_index(
                 drop=True)
-            column = 'target' if target else 'prc'
+            column = 'target_name' if target else 'prc'
 
             order_values = stat_frame_v1[column].to_list() + list((tmp1 if target else tmp2).values.flatten()) + \
                            stat_frame_v2[column].to_list()

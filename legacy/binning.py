@@ -5,7 +5,7 @@ from sklearn import tree
 
 def points_calulation(var: pd.Series, min_size: float = 5, rnd: int = 2, not_join_threshold: float = None) -> list:
     """
-    Calculate points for binning numeric variable without target variable.
+    Calculate points for binning numeric variable without target_name variable.
 
     Keyword arguments:
         var (pd.Series) -- Numeric variable
@@ -52,7 +52,7 @@ def points_calulation(var: pd.Series, min_size: float = 5, rnd: int = 2, not_joi
 
 def points_calculation_tree(var: pd.Series, target: pd.Series, min_size: float = 5, rnd: int = 2) -> list:
     """
-    Calculate points for binning numeric variable dependent on target variable.
+    Calculate points for binning numeric variable dependent on target_name variable.
 
     Keyword arguments:
         var (pd.Series) -- Numeric variable
@@ -92,7 +92,7 @@ def get_thresholds_for_data(data: pd.DataFrame, target: str = None, min_size: fl
 
     Keyword arguments:
         data (pd.DataFrame) -- input data frame
-        target (str) -- target column name
+        target (str) -- target_name column name
         min_size (float) -- minimum size of group in percent
         rnd -- Round level for variable values (default 2)
 

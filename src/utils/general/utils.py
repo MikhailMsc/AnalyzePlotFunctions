@@ -26,3 +26,14 @@ def pretty_number(number: Union[int, float]) -> str:
         return left_part + '.' + right_part
     else:
         return left_part
+
+
+def pretty_round(val: Union[int, float], rnd: int) -> Union[int, float]:
+    val = round(val, rnd)
+    if rnd == 0:
+        val = int(val)
+
+    return val
+
+
+
