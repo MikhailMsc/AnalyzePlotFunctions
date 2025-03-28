@@ -7,18 +7,19 @@ from utils.domain.columns import C_VALUE, C_PERCENT, C_TARGET, C_COUNT
 from utils.domain.const import MIN, MAX
 from utils.domain.validate import validate_binary_target, validate_column_for_binning
 from utils.framework_depends import (
-    SH_ValueCounts, value_counts, get_shape, round_series, filter_missing_df,
-    series_to_list, len_series, get_max, get_unique, convert_df_to_pandas,
+    SH_ValueCounts, value_counts, get_shape, filter_missing_df,
+    series_to_list, len_series, get_max, convert_df_to_pandas,
     concat_series_to_frame, get_count_missing, get_columns, get_series_from_df
 )
-from utils.framework_depends.columns.is_numeric_column import is_numeric_column
 from utils.general.types import Series, DataFrame
 from utils.general.utils import get_accuracy, pretty_round
 
+from .params import BinningParams, default_bin_params
+
 
 def get_all_vars_cutoffs(
-        df: DataFrame, columns: List[str] = None, target_name: str = None, min_prc: float = 5.0,
-        rnd: int = None
+        df: DataFrame, columns: List[str] = None, target_name: str = None,
+        bin_params: BinningParams = default_bin_params
 ) -> Dict[str, list]:
     if target_name is not None:
         validate_binary_target(get_series_from_df(df, target_name))
@@ -34,8 +35,7 @@ def get_all_vars_cutoffs(
 
     vars_cutoffs = {
         col: get_var_cutoffs(
-            get_series_from_df(df, col), target, min_prc, rnd,
-            False, col
+            get_series_from_df(df, col), target, bin_params, False, col
         )
         for col in columns
     }
@@ -43,15 +43,15 @@ def get_all_vars_cutoffs(
 
 
 def get_var_cutoffs(
-        variable: Series, target: Series = None, min_prc: float = 5.0,
-        rnd: int = None, validate_target: bool = True, _var_name: str = ''
+        variable: Series, target: Series = None, bin_params: BinningParams = default_bin_params,
+        validate_target: bool = True, _var_name: str = ''
 ) -> list:
     """
     Расчет точек бинаризации переменной.
     """
     validate_column_for_binning(variable, _var_name)
 
-    min_prc = max(min_prc, 0.001)
+    min_prc = max(bin_params.min_prc, 0.001)
     cnt_missing = get_count_missing(variable)
     cnt_total = len_series(variable)
     cnt_not_missing = cnt_total - cnt_missing
@@ -74,8 +74,8 @@ def get_var_cutoffs(
     else:
         cutoffs = _get_var_cutoffs_with_target(variable, target, min_prc, validate_target)
 
-    if rnd is not None:
-        cutoffs = sorted(set([pretty_round(val, rnd) for val in cutoffs]))
+    if bin_params.rnd is not None:
+        cutoffs = sorted(set([pretty_round(val, bin_params.rnd) for val in cutoffs]))
 
     cutoffs = [MIN, ] + cutoffs + [MAX, ]
     return cutoffs

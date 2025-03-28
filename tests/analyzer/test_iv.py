@@ -1,10 +1,10 @@
-from analyzer.iv import calc_information_value, BinningParams, calc_all_information_value
+from analyzer.iv import calc_var_information_value, BinningParams, calc_all_information_value
 
 
 def test_iv_PD():
     import pandas as pd
     df = pd.read_csv('../titanic.csv', sep=',')
-    iv_table = calc_information_value(df, var_name='Age', target_name='Survived', binning=True)
+    iv_table = calc_var_information_value(df, var_name='Age', target_name='Survived', binning=True)
     print(iv_table)
     #     17.91385
 
@@ -12,7 +12,7 @@ def test_iv_PD():
 def test_iv_PL():
     import polars as pl
     df = pl.read_csv('../titanic.csv', separator=',')
-    iv_table = calc_information_value(df, var_name='Age', target_name='Survived', binning=True)
+    iv_table = calc_var_information_value(df, var_name='Age', target_name='Survived', binning=True)
     print(iv_table)
 
 
@@ -29,7 +29,7 @@ def test_iv_PD_with_params():
         rnd=0
     )
 
-    iv_table = calc_information_value(df, var_name='Age', target_name='Survived', binning=bin_params)
+    iv_table = calc_var_information_value(df, var_name='Age', target_name='Survived', binning=bin_params)
     print(iv_table)
 
 

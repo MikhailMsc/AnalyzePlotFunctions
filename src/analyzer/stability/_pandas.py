@@ -90,9 +90,9 @@ def calc_stability(
     stats_secondary = fill_missing_df(stats_secondary, fill_na_dict)
 
     # Необходимо у целевого убрать secondary
-    if split_var_value is not None:
-        main_indx = stats_secondary[split_var_name] == split_var_value
-        stats_secondary.loc[main_indx, [C_COUNT_SECONDARY.n, C_TARGET_SECONDARY.n]] = None
+    # if split_var_value is not None:
+    #     main_indx = stats_secondary[split_var_name] == split_var_value
+    #     stats_secondary.loc[main_indx, [C_COUNT_SECONDARY.n, C_TARGET_SECONDARY.n]] = None
 
     # Статистики общей популяции
     stats_secondary[C_POPULATION_MAIN.n] = 100 * stats_secondary[C_COUNT_MAIN.n] / main_total_cnt

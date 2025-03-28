@@ -1,5 +1,5 @@
-from .main import calc_stability, calc_all_stability
+from .main import _calc_stability_combo, calc_stability_report
 
 __all__ = [
-    calc_stability, calc_all_stability
+    _calc_stability_combo, calc_stability_report
 ]

@@ -77,13 +77,13 @@ def calc_stability(
     stats_secondary = fill_missing_df(stats_secondary, fill_na_dict)
 
     # Необходимо у целевого убрать secondary
-    if split_var_value is not None:
-        stats_secondary = stats_secondary.with_columns(
-            pl.when(pl.col(split_var_name) == split_var_value).
-            then(pl.lit(None)).otherwise(pl.col(C_COUNT_SECONDARY.n)).alias(C_COUNT_SECONDARY.n),
-            pl.when(pl.col(split_var_name) == split_var_value).
-            then(pl.lit(None)).otherwise(pl.col(C_TARGET_SECONDARY.n)).alias(C_TARGET_SECONDARY.n),
-        )
+    # if split_var_value is not None:
+    #     stats_secondary = stats_secondary.with_columns(
+    #         pl.when(pl.col(split_var_name) == split_var_value).
+    #         then(pl.lit(None)).otherwise(pl.col(C_COUNT_SECONDARY.n)).alias(C_COUNT_SECONDARY.n),
+    #         pl.when(pl.col(split_var_name) == split_var_value).
+    #         then(pl.lit(None)).otherwise(pl.col(C_TARGET_SECONDARY.n)).alias(C_TARGET_SECONDARY.n),
+    #     )
 
     # Статистики общей популяции
     stats_secondary = stats_secondary.with_columns(

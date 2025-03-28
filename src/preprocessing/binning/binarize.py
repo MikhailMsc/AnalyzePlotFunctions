@@ -1,6 +1,3 @@
-from dataclasses import dataclass
-from typing import List, Union
-
 from utils.domain.const import MIN, MAX, MISSING, NOT_MISSING
 from utils.domain.validate import validate_column_for_binning
 from utils.general.types import Series, FrameWork, get_framework_from_series
@@ -8,27 +5,18 @@ from utils.general.types import Series, FrameWork, get_framework_from_series
 from utils.general.utils import pretty_number
 
 from .cutoffs import get_var_cutoffs
-
-
-@dataclass
-class BinningParams:
-    # Предопределенный бинниг
-    cutoffs: List[Union[int, float]] = None
-
-    # Расчетный биннинг
-    min_prc: float = 5.0  # Минимальный размер группы
-    rnd: int = None       # Округление перед биннингом
+from .params import BinningParams, default_bin_params
 
 
 def binarize_series(
-        variable: Series, cutoffs: list = None, target: Series = None, min_prc: float = 5.0,
-        rnd: int = None, validate_target: bool = True, _var_name: str = ''
+        variable: Series, target: Series = None, bin_params: BinningParams = default_bin_params,
+        validate_target: bool = True, _var_name: str = ''
 ) -> Series:
-    if cutoffs is None:
-        cutoffs = get_var_cutoffs(variable, target, min_prc, rnd, validate_target)
+    if bin_params.cutoffs is None:
+        cutoffs = get_var_cutoffs(variable, target, bin_params, validate_target)
     else:
         validate_column_for_binning(variable, _var_name)
-        cutoffs = [MIN, ] + cutoffs + [MAX,]
+        cutoffs = [MIN, ] + bin_params.cutoffs + [MAX,]
 
     framework = get_framework_from_series(variable)
     func = _MAP_FRAMEWORK_FUNC[framework]

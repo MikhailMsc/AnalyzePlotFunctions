@@ -34,7 +34,6 @@ _MAP_FRAMEWORK_map_elements_series = {
 }
 
 
-
 def map_elements_df(df: DataFrame, map_dict: Dict[VarName, Dict[Source, Target]]) -> DataFrame:
     framework = get_framework_from_dataframe(df)
     func = _MAP_FRAMEWORK_map_elements_df[framework]
@@ -49,15 +48,21 @@ def _map_elements_df_pandas(df: DataFrame, map_dict: Dict[VarName, Dict[Source, 
 
 def _map_elements_df_polars(df: DataFrame, map_dict: Dict[VarName, Dict[Source, Target]]) -> DataFrame:
     import polars as pl
-    df = df.with_columns(*[
-        pl.col(col_name).map_elements(lambda x: map_dict[col_name].get(x, x)).alias(col_name)
-        for col_name in map_dict
-    ])
+
+    for col_name, map_vals in map_dict.items():
+        df = df.with_columns(pl.col(col_name).map_elements(lambda x: map_dict[col_name].get(x, x)).alias(col_name))
+
+    # БАГ - вариант ниже не работает.
+    # df = df.with_columns(*[
+    #     pl.col(col_name).map_elements(lambda x: map_dict[col_name].get(x, x)).alias(col_name)
+    #     for col_name in map_dict
+    # ])
     return df
 
 
 def _map_elements_df_pyspark(df: DataFrame, map_dict: Dict[VarName, Dict[Source, Target]]) -> DataFrame:
     raise NotImplementedError
+
 
 _MAP_FRAMEWORK_map_elements_df = {
     FrameWork.pandas: _map_elements_df_pandas,

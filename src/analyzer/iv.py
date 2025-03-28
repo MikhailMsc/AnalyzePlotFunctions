@@ -1,22 +1,17 @@
-from typing import List, Union, Dict, Tuple
+from typing import List, Union, Tuple
 
 import pandas as pd
 
+from preprocessing import BinningParamsMultiVars, MapDictMultiVars, preprocess_df, MapDictSingleVar
 from utils.domain.columns import (
     C_GROUP, C_TOTAL, C_TARGET, C_POPULATION, C_TARGET_RATE, C_WOE,
     C_GROUP_IV, C_TOTAL_IV, C_TARGET_POPULATION, C_VARNAME, C_GROUP_NUMBER
 )
-from utils.domain.const import MISSING
-from utils.domain.validate import validate_binary_target
-from utils.framework_depends import (
-    set_column, convert_df_to_pandas, fill_missing_df,
-    map_elements_series, get_columns,
-    optimize_df, get_series_from_df, get_sub_df
-)
-from utils.framework_depends.columns.is_numeric_column import is_numeric_column
+from utils.framework_depends import convert_df_to_pandas
+
 from utils.general.schema import SchemaDF
 from utils.general.types import DataFrame, get_framework_from_dataframe, FrameWork
-from preprocessing.binning import binarize_series, BinningParams
+from preprocessing.binning import BinningParams
 
 SH_InformationValueReport = SchemaDF(
     columns=[
@@ -31,50 +26,21 @@ SH_ShortInformationValueReport = SchemaDF(columns=[C_VARNAME, C_TOTAL_IV], key=[
 
 def calc_all_information_value(
         df: DataFrame, target_name: str, analyze_vars: List[str] = None, ignore_vars: List[str] = None,
-        binning: Union[Dict[str, BinningParams], bool, List[str]] = True, map_values: Dict[str, Dict] = None,
-        sort_by_iv: bool = True, _optimize_df: bool = True
+        binning: BinningParamsMultiVars = True,
+        map_values: MapDictMultiVars = None, sort_by_iv: bool = True
 ) -> Tuple[SH_ShortInformationValueReport.t, SH_InformationValueReport.t]:
 
-    validate_binary_target(get_series_from_df(df, target_name))
-
-    if not analyze_vars:
-        if not ignore_vars:
-            ignore_vars = []
-        ignore_vars.append(target_name)
-
-        analyze_vars = [col for col in get_columns(df) if col not in ignore_vars]
-
-    df = get_sub_df(df, columns=analyze_vars + [target_name, ])
-    if _optimize_df:
-        df = optimize_df(get_sub_df(df, columns=analyze_vars + [target_name,]))
+    df = preprocess_df(
+        df, analyze_vars, ignore_vars, target_name, binning,
+        map_values, True, True
+    )
 
     total_report = []
     for var_name in analyze_vars:
-        if type(binning) is bool:
-            single_binning = binning
-        elif type(binning) is list:
-            if var_name in binning:
-                single_binning = True
-            else:
-                single_binning = False
-        else:
-            if var_name in binning:
-                single_binning = binning[var_name]
-            else:
-                single_binning = False
-
-        if single_binning is True and not is_numeric_column(get_series_from_df(df, var_name)):
-            single_binning = False
-
-        if map_values:
-            single_map_values = map_values.get(var_name, None)
-        else:
-            single_map_values = None
-
-        single_report = calc_information_value(
+        single_report = calc_var_information_value(
             df=df, var_name=var_name, target_name=target_name,
-            binning=single_binning, map_values=single_map_values,
-            validate_target=False
+            binning=False,
+            validate_target=False,
         )
         total_report.append(single_report)
 
@@ -95,42 +61,22 @@ def calc_all_information_value(
     return total_report_short, total_report
 
 
-def calc_information_value(
+def calc_var_information_value(
         df: DataFrame, var_name: str, target_name: str,
-        binning: Union[BinningParams, bool] = False, map_values: dict = None,
-        validate_target: bool = True, _copy: bool = True
+        binning: Union[BinningParams, bool] = True, map_values: MapDictSingleVar = None,
+        validate_target: bool = True
 ) -> SH_InformationValueReport.t:
     """
     TODO: Дать подробное описание
     """
-    if validate_target:
-        validate_binary_target(get_series_from_df(df, target_name))
+    if validate_target or binning or map_values:
+        if map_values is not None:
+            map_values = {var_name: map_values}
 
-    if _copy:
-        df = get_sub_df(df, columns=[var_name, target_name])
-
-    if binning is not False:
-        if type(binning) is BinningParams:
-            ser = binarize_series(
-                variable=get_series_from_df(df, var_name),
-                target=get_series_from_df(df, target_name),
-                validate_target=False,
-                cutoffs=binning.cutoffs,
-                min_prc=binning.min_prc,
-                rnd=binning.rnd
-            )
-        else:
-            ser = binarize_series(
-                variable=get_series_from_df(df, var_name),
-                target=get_series_from_df(df, target_name),
-                validate_target=False
-            )
-        df = set_column(df, ser, var_name)
-    else:
-        df = fill_missing_df(df, columns_values={var_name: MISSING})
-        if map_values:
-            ser = map_elements_series(get_series_from_df(df, var_name), map_values)
-            df = set_column(df, ser, var_name)
+        df = preprocess_df(
+            df, [var_name], target_name=target_name, binning=binning,
+            map_values=map_values, validate_target=validate_target, drop_not_processed=True
+        )
 
     framework = get_framework_from_dataframe(df)
     func = _MAP_FRAMEWORK_FUNC[framework]
