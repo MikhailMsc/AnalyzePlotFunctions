@@ -16,7 +16,7 @@ from preprocessing.binning import BinningParams
 SH_InformationValueReport = SchemaDF(
     columns=[
         C_VARNAME, C_GROUP_NUMBER, C_GROUP, C_TOTAL, C_TARGET, C_POPULATION, C_TARGET_POPULATION,
-        C_TARGET_RATE, C_WOE, C_GROUP_IV, C_TOTAL_IV
+        C_TARGET_RATE, C_GROUP_IV, C_TOTAL_IV
     ],
     key=[C_VARNAME, C_GROUP_NUMBER]
 )
@@ -108,8 +108,8 @@ def _calc_iv_pandas(df: DataFrame, var_name: str, target_name: str) -> DataFrame
     not_target_population = not_target / not_target_sum
 
     df[C_WOE.n] = np.log(target_population / not_target_population)
-    df[C_GROUP_IV.n] = 100 * (target_population - not_target_population) * df[C_WOE.n]
-    df[C_TOTAL_IV.n] = df[C_GROUP_IV.n].sum()
+    df[C_GROUP_IV.n] = 100 * (target_population - not_target_population).abs() * df[C_WOE.n]
+    df[C_TOTAL_IV.n] = df[C_GROUP_IV.n].abs().sum()
     return df
 
 
@@ -138,10 +138,10 @@ def _calc_iv_polars(df: DataFrame, var_name: str, target_name: str) -> DataFrame
 
     df = df.with_columns((target_population / not_target_population).log().alias(C_WOE.n))
     df = df.with_columns(
-        (100 * (target_population - not_target_population) * pl.col(C_WOE.n)).alias(C_GROUP_IV.n)
+        (100 * (target_population - not_target_population).abs() * pl.col(C_WOE.n)).alias(C_GROUP_IV.n)
     )
     df = df.with_columns(
-        pl.col(C_GROUP_IV.n).sum().alias(C_TOTAL_IV.n)
+        pl.col(C_GROUP_IV.n).abs().sum().alias(C_TOTAL_IV.n)
     )
     df = df.sort(C_GROUP.n)
     df = convert_df_to_pandas(df)

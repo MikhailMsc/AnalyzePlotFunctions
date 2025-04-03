@@ -41,8 +41,8 @@ def map_elements_df(df: DataFrame, map_dict: Dict[VarName, Dict[Source, Target]]
 
 
 def _map_elements_df_pandas(df: DataFrame, map_dict: Dict[VarName, Dict[Source, Target]]) -> DataFrame:
-    for col in map_dict:
-        df[col] = df.map(lambda x: map_dict[col].get(x, x))
+    for col, vals in map_dict.items():
+        df[col] = df[col].map(lambda x: vals.get(x, x))
     return df
 
 

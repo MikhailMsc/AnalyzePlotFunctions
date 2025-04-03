@@ -16,6 +16,12 @@ C_TARGET_RATE = Column(name='TargetRate(%)')
 C_WOE = Column(name='WoE')
 C_GROUP_IV = Column(name='GroupIV')
 C_TOTAL_IV = Column(name='TotalIV')
+C_SEGMENT_ID = Column(name='SegmentID')
+
+C_PARENT_MIN = Column(name='ParentMin')
+C_PARENT_MIN_TR = Column(name='ParentMin TR(%)')
+C_PARENT_MAX = Column(name='ParentMax')
+C_PARENT_MAX_TR = Column(name='ParentMax TR(%)')
 
 C_SPLIT_COLUMN = Column(name='SplitColumn')
 C_COUNT_MAIN = Column(name='CountMain')

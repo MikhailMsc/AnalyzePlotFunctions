@@ -12,7 +12,7 @@ from utils.domain.columns import (
 )
 from utils.framework_depends import (
     set_column, rename_columns, get_columns, convert_df_to_pandas, get_sub_df, encode_df, optimize_df_int_types,
-    concat_df
+    concat_df, convert_df_to_polars
 )
 from utils.general.column import Column
 from utils.general.schema import SchemaDF
@@ -61,6 +61,11 @@ info_msg = f"""
     {C_TARGET_POPULATION_SECONDARY.n} - относительный размер таргета в данном сегменте в сверяемой выборке, 
     {C_POPULATION_STABILITY.n} - индекс стабильности размера сегмента (базовая vs сверяемая), 
     {C_TARGET_STABILITY.n} - индекс стабильности таргета сегмента (базовая vs сверяемая)
+    
+    Показатели стабильности:
+    - Чем больше значение ПО МОДУЛЮ = тем больше отклонение от базового значения
+    - Стабильность > 0 = целевой показатель увеличился, относительно базового значения.
+    - Стабильность < 0 = целевой показатель уменьшился, относительно базового значения.
 """
 
 
@@ -90,8 +95,12 @@ def calc_stability_report(
     if target_name:
         select_cols.append(target_name)
 
+    df = get_sub_df(df, select_cols)
+    if get_framework_from_dataframe(df) is FrameWork.pandas:
+        df = convert_df_to_polars(df)
+
     df = preprocess_df(
-        get_sub_df(df, select_cols), analyze_vars, None, target_name, binning,
+        df, analyze_vars, None, target_name, binning,
         map_values, True, False
     )
     df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars)
@@ -101,8 +110,7 @@ def calc_stability_report(
     for cnt in range(combo_min, combo_max + 1):
         for vars_combo in itertools.combinations(analyze_vars, cnt):
             combo_report = _calc_stability_combo(
-                df, split_var_name, vars_combo, split_var_value, target_name, False, None,
-                False, False
+                df, split_var_name, vars_combo, split_var_value, target_name
             )
             full_report.append(combo_report)
 
@@ -118,30 +126,22 @@ def calc_stability_report(
     schema_out.delete_columns([C_VARNAME, C_VALUE])
     schema_out.add_columns({
         col.child(f'Var{i}_{col_name}'): True
-        for col_name, col in zip(['Name', 'Value'], [C_VARNAME, C_VALUE])
         for i in range(combo_min, combo_max + 1)
+        for col_name, col in zip(['Name', 'Value'], [C_VARNAME, C_VALUE])
     }, pos=1)
     schema_out.replace_columns({C_SPLIT_COLUMN.n: Column(split_var_name)})
     full_report = schema_out(full_report, reorder_colums=True)
-
+    full_report = convert_df_to_pandas(full_report)
     print(info_msg)
     return full_report
 
 
 def _calc_stability_combo(
-        df: DataFrame, split_var_name: str, analyze_vars: List[str], split_var_value: Any = None,
-        target_name: str = None,
-        binning: BinningParamsMultiVars = True,
-        map_values: BinningParamsMultiVars = None,
-        _validate_target: bool = True, _preprocess: bool = True
+        df: DataFrame, split_var_name: str, analyze_vars: List[str],
+        split_var_value: Any = None, target_name: str = None
 ) -> Union[SH_StabilityReportWithTarget.t, SH_StabilityReportNoTarget.t]:
 
     analyze_vars = sorted(analyze_vars)
-    if _preprocess:
-        df = preprocess_df(
-            df, analyze_vars, None, target_name, binning,
-            map_values, _validate_target, True
-        )
 
     framework = get_framework_from_dataframe(df)
     func = _MAP_FRAMEWORK_calc_stability[framework]
@@ -160,18 +160,6 @@ def _calc_stability_combo(
         values_cols.append(C_VALUE_I)
 
     stability_stats = rename_columns(stability_stats, rename_dict)
-
-    if target_name:
-        schema_out = SH_StabilityReportWithTarget.copy()
-    else:
-        schema_out = SH_StabilityReportNoTarget.copy()
-
-    schema_out.delete_columns([C_VARNAME, C_VALUE])
-    schema_out.add_columns({col: True for col in names_cols + values_cols}, pos=1)
-    schema_out.replace_columns({C_SPLIT_COLUMN.n: Column(split_var_name)})
-
-    stability_stats = schema_out(stability_stats, reorder_colums=True)
-    # stability_stats = convert_df_to_pandas(stability_stats)
     return stability_stats
 
 
@@ -290,8 +278,6 @@ def _make_reverse_mapping_pandas(report: DataFrame, var_name_column, var_value_c
 
 def _make_reverse_mapping_polars(report: DataFrame, var_name_column, var_value_column, mapping: dict) -> DataFrame:
     import polars as pl
-
-    sub_report = report.select(var_name_column, var_value_column)
 
     def f_mapping(row):
         var_name = row[var_name_column]

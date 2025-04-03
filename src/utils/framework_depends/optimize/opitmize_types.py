@@ -40,7 +40,10 @@ def _is_optimize_df_int_types_pandas(df: DataFrame, vars_min_max: MinMaxVarsValu
         for tp in [np.uint8, np.int8, np.uint16, np.int16, np.uint32, np.int32, np.uint64, np.int64]
         if (tp_info := np.iinfo(tp))
     }
-    vars_types = {col: _get_optimal_type(int_types, min_val, max_val) for col, (min_val, max_val) in vars_min_max}
+    vars_types = {
+        col: _get_optimal_type(int_types, min_val, max_val)
+        for col, (min_val, max_val) in vars_min_max.items()
+    }
     df = df.astype(vars_types)
     return df
 
