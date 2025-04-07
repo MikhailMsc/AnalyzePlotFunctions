@@ -17,7 +17,7 @@ NewValue = TypeVar('NewValue')
 
 MapDictSingleVar = Dict[OldValue, NewValue]
 MapDictMultiVars = Dict[Variable, MapDictSingleVar]
-# BinningParamsSingleVars = Union[BinningParams, bool]
+BinningParamsSingleVars = Union[BinningParams, bool]
 BinningParamsMultiVars = Union[Dict[str, Union[BinningParams, True]], bool, BinningParams, List[str]]
 
 

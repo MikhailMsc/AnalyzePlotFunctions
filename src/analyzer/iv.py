@@ -24,7 +24,7 @@ SH_InformationValueReport = SchemaDF(
 SH_ShortInformationValueReport = SchemaDF(columns=[C_VARNAME, C_TOTAL_IV], key=[C_VARNAME])
 
 
-def calc_all_information_value(
+def calc_iv_report(
         df: DataFrame, target_name: str, analyze_vars: List[str] = None, ignore_vars: List[str] = None,
         binning: BinningParamsMultiVars = True,
         map_values: MapDictMultiVars = None, sort_by_iv: bool = True
@@ -37,7 +37,7 @@ def calc_all_information_value(
 
     total_report = []
     for var_name in analyze_vars:
-        single_report = calc_var_information_value(
+        single_report = calc_iv_var(
             df=df, var_name=var_name, target_name=target_name,
             binning=False,
             validate_target=False,
@@ -61,7 +61,7 @@ def calc_all_information_value(
     return total_report_short, total_report
 
 
-def calc_var_information_value(
+def calc_iv_var(
         df: DataFrame, var_name: str, target_name: str,
         binning: Union[BinningParams, bool] = True, map_values: MapDictSingleVar = None,
         validate_target: bool = True
@@ -117,7 +117,7 @@ def _calc_iv_polars(df: DataFrame, var_name: str, target_name: str) -> DataFrame
     import polars as pl
 
     df = df.group_by(var_name).agg(
-        pl.col(target_name).count().alias(C_TOTAL.n),
+        pl.col(target_name).len().alias(C_TOTAL.n),
         pl.col(target_name).sum().alias(C_TARGET.n)
     ).rename({var_name: C_GROUP.n})
 

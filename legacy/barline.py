@@ -7,7 +7,7 @@ from utils.framework_depends import reorder_palette
 from binning import bin_variable
 
 
-def var_stat(data: pd.DataFrame, var: str, target: str = None, binargs: dict = dict(), del_values: list = None,
+def var_stat(data: pd.DataFrame, var: str, target: str = None, binning: BinningParamsSingleVars = True, del_values: list = None,
              plot=True, xticks='name', annotation: bool = True, plot_config=None,
              print_points=True, return_table=True):
     """
