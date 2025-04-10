@@ -1,6 +1,5 @@
-from analyzer.concentration import calc_concentration_report
-from preprocessing import BinningParams
-
+from analyzer.stats.concentration import calc_concentration_report
+from analyzer.preprocessing import BinningParams
 
 
 def test_concentration_report_PD():
