@@ -1,5 +1,8 @@
 import itertools
 from typing import List, Dict
+import math
+
+from tqdm import tqdm
 
 from analyzer import logger
 from analyzer.preprocessing import BinningParamsMultiVars, MapDictMultiVars, preprocess_df
@@ -30,9 +33,9 @@ info_msg = f"""
     {C_GROUP_IV.n} - information value данного сегмента,
 
     {C_PARENT_MIN.n} - родительский сегмент с минимальным target_rate,
-    {C_PARENT_MIN_TR.n} - минимальный target_rate родительского сегмета,
+    {C_PARENT_MIN_TR.n} - минимальный target_rate родительского сегмента,
     {C_PARENT_MAX.n} - родительский сегмент с максимальным target_rate,
-    {C_PARENT_MAX_TR.n} - максимальный target_rate родительского сегмета
+    {C_PARENT_MAX_TR.n} - максимальный target_rate родительского сегмента
 
     Information Value (IV):
     - Чем больше значение ПО МОДУЛЮ = тем больше отклонение от target rate oт среднего по выборке
@@ -98,7 +101,10 @@ def calc_concentration_report(
     cnt_target = df[target_name].sum()
 
     for cnt in range(combo_min, combo_max + 1):
-        for vars_combo in itertools.combinations(analyze_vars, cnt):
+        cnt_combos = math.comb(len(analyze_vars), cnt)
+        bar_format = (f"{{l_bar}}{{bar}}| Комбинации из {cnt} переменных, {{n_fmt}}/{cnt_combos} "
+                      f"[{{elapsed}}<{{remaining}}, {{rate_fmt}}]")
+        for vars_combo in tqdm(itertools.combinations(analyze_vars, cnt), total=cnt_combos, bar_format=bar_format):
             combo_report, max_id_segment = _calc_concentration_combo(
                 df, vars_combo, target_name, vars_order, start_id_segment, cnt_target)
             start_id_segment = max_id_segment + 1
@@ -136,7 +142,7 @@ def calc_concentration_report(
         min_tgrate_segment = max(nearest_segments, key=lambda x: x[2])[:2]
         max_tgrate_segment = min(nearest_segments, key=lambda x: x[2])[:2]
 
-        return (min_tgrate_segment, max_tgrate_segment)
+        return min_tgrate_segment, max_tgrate_segment
 
     if framework is FrameWork.polars:
         full_report = filter_by_population_pl(full_report, pop_more)

@@ -18,7 +18,7 @@ NewValue = TypeVar('NewValue')
 MapDictSingleVar = Dict[OldValue, NewValue]
 MapDictMultiVars = Dict[Variable, MapDictSingleVar]
 BinningParamsSingleVars = Union[BinningParams, bool]
-BinningParamsMultiVars = Union[Dict[str, Union[BinningParams, True]], bool, BinningParams, List[str]]
+BinningParamsMultiVars = Union[Dict[str, Union[BinningParams, bool]], bool, BinningParams, List[str]]
 
 
 def preprocess_df(

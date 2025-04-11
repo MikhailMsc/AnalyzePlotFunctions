@@ -1,3 +1,4 @@
+from functools import reduce
 from typing import Union, List
 
 import numpy as np
@@ -136,3 +137,34 @@ def calc_stability(
         stats_secondary = stats_secondary.sort_values([split_var_name,] + analyze_vars)
     return stats_secondary
 
+
+def make_reverse_mapping_pandas(report: DataFrame, var_name_column, var_value_column, mapping: dict) -> DataFrame:
+    import pandas as pd
+
+    def f_mapping(row):
+        if pd.isnull(row[var_name_column]):
+            return None
+
+        var_name = row[var_name_column]
+        var_value = row[var_value_column]
+        return mapping[var_name][var_value]
+
+    report[var_value_column] = report.apply(f_mapping, axis=1)
+    return report
+
+
+def filter_small_segments_pandas(
+        report: DataFrame, filter_dict: dict, unique_cols: List[str]
+) -> DataFrame:
+    indxs = []
+    for col, val in filter_dict.items():
+        if col in [C_TARGET_STABILITY.n, C_POPULATION_STABILITY.n]:
+            indx = report[col].between(-val, val)
+        else:
+            indx = report[col] > val
+        indxs.append(indx)
+
+    indxs = reduce(lambda x, y: x & y, indxs)
+    filtered_segments = report.loc[indxs, unique_cols].drop_duplicates()
+    report = filtered_segments.merge(report, on=unique_cols, how='inner').reset_index(drop=True)
+    return report

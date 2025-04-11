@@ -67,7 +67,7 @@ class SchemaDF(WithLogger):
                 self._key[pos] = replace_dict[col_name]
         self._key_names = None
 
-    def delete_columns(self, columns: list[Column]):
+    def delete_columns(self, columns: List[Column]):
         for col in columns:
             if col in self._columns:
                 self._columns.remove(col)
@@ -114,5 +114,11 @@ class SchemaDF(WithLogger):
         else:
             return self._log_msg_template
 
+    def __repr__(self):
+        if self._name:
+            sh_name = self._name + '('
+        else:
+            sh_name = 'Schema('
 
-
+        columns = 'columns=' + ', '.join([col.n for col in self._columns])
+        return f'{sh_name}{columns})'

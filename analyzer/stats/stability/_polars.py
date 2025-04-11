@@ -133,3 +133,43 @@ def calc_stability(
         stats_secondary = stats_secondary.sort(split_var_name, *analyze_vars)
     return stats_secondary
 
+
+def make_reverse_mapping_polars(report: DataFrame, var_name_column, var_value_column, mapping: dict) -> DataFrame:
+    import polars as pl
+
+    def f_mapping(row):
+        var_name = row[var_name_column]
+        if var_name is None:
+            return None
+
+        var_value = row[var_value_column]
+        return str(mapping[var_name][var_value])
+
+    report = report.with_columns(
+        pl.struct([var_name_column, var_value_column]).map_elements(f_mapping, return_dtype=pl.String).
+        alias(var_value_column)
+    )
+    return report
+
+
+def filter_small_segments_polars(
+        report: DataFrame, filter_dict: dict, unique_cols: List[str]
+) -> DataFrame:
+    import polars as pl
+
+    indxs = []
+    for col, val in filter_dict.items():
+        if col in [C_TARGET_STABILITY.n, C_POPULATION_STABILITY.n]:
+            indx = pl.col(col).is_between(-val, val)
+        else:
+            indx = pl.col(col) > val
+        indxs.append(indx)
+
+    filtered_segments = (
+        report.filter(*indxs).
+        select(unique_cols).
+        unique()
+    )
+
+    report = filtered_segments.join(report, on=unique_cols, how='inner', nulls_equal=True)
+    return report

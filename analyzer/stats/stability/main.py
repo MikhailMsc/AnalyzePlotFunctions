@@ -1,6 +1,5 @@
 import itertools
 import re
-from functools import reduce
 from typing import Union, Any, List
 
 from analyzer.preprocessing import BinningParamsMultiVars, preprocess_df, MapDictMultiVars
@@ -18,9 +17,8 @@ from analyzer.utils.general.column import Column
 from analyzer.utils.general.schema import SchemaDF
 from analyzer.utils.general.types import DataFrame, FrameWork, get_framework_from_dataframe
 
-from ._pandas import calc_stability as _calc_stability_pandas
-from ._polars import calc_stability as _calc_stability_polars
-
+from ._pandas import calc_stability as _calc_stability_pandas, make_reverse_mapping_pandas, filter_small_segments_pandas
+from ._polars import calc_stability as _calc_stability_polars, make_reverse_mapping_polars, filter_small_segments_polars
 
 SH_StabilityReportNoTarget = SchemaDF(
     columns=[
@@ -202,49 +200,9 @@ def _filter_small_segments(
     return func(report, filter_dict, unique_cols)
 
 
-def _filter_small_segments_pandas(
-        report: DataFrame, filter_dict: dict, unique_cols: List[str]
-) -> DataFrame:
-    indxs = []
-    for col, val in filter_dict.items():
-        if col in [C_TARGET_STABILITY.n, C_POPULATION_STABILITY.n]:
-            indx = report[col].between(-val, val)
-        else:
-            indx = report[col] > val
-        indxs.append(indx)
-
-    indxs = reduce(lambda x, y: x & y, indxs)
-    filtered_segments = report.loc[indxs, unique_cols].drop_duplicates()
-    report = filtered_segments.merge(report, on=unique_cols, how='inner').reset_index(drop=True)
-    return report
-
-
-def _filter_small_segments_polars(
-        report: DataFrame, filter_dict: dict, unique_cols: List[str]
-) -> DataFrame:
-    import polars as pl
-
-    indxs = []
-    for col, val in filter_dict.items():
-        if col in [C_TARGET_STABILITY.n, C_POPULATION_STABILITY.n]:
-            indx = pl.col(col).is_between(-val, val)
-        else:
-            indx = pl.col(col) > val
-        indxs.append(indx)
-
-    filtered_segments = (
-        report.filter(*indxs).
-        select(unique_cols).
-        unique()
-    )
-
-    report = filtered_segments.join(report, on=unique_cols, how='inner', nulls_equal=True)
-    return report
-
-
 _MAP_FRAMEWORK_filter_small_segments = {
-    FrameWork.pandas: _filter_small_segments_pandas,
-    FrameWork.polars: _filter_small_segments_polars,
+    FrameWork.pandas: filter_small_segments_pandas,
+    FrameWork.polars: filter_small_segments_polars,
     # FrameWork.spark: _calc_stability_spark,
 }
 
@@ -261,41 +219,8 @@ def _make_reverse_mapping(report: DataFrame, reverse_map_vars: dict) -> DataFram
     return report
 
 
-def _make_reverse_mapping_pandas(report: DataFrame, var_name_column, var_value_column, mapping: dict) -> DataFrame:
-    import pandas as pd
-
-    def f_mapping(row):
-        if pd.isnull(row[var_name_column]):
-            return None
-
-        var_name = row[var_name_column]
-        var_value = row[var_value_column]
-        return mapping[var_name][var_value]
-
-    report[var_value_column] = report.apply(f_mapping, axis=1)
-    return report
-
-
-def _make_reverse_mapping_polars(report: DataFrame, var_name_column, var_value_column, mapping: dict) -> DataFrame:
-    import polars as pl
-
-    def f_mapping(row):
-        var_name = row[var_name_column]
-        if var_name is None:
-            return None
-
-        var_value = row[var_value_column]
-        return str(mapping[var_name][var_value])
-
-    report = report.with_columns(
-        pl.struct([var_name_column, var_value_column]).map_elements(f_mapping, return_dtype=pl.String).
-        alias(var_value_column)
-    )
-    return report
-
-
 _MAP_FRAMEWORK_make_reverse_mapping = {
-    FrameWork.pandas: _make_reverse_mapping_pandas,
-    FrameWork.polars: _make_reverse_mapping_polars,
+    FrameWork.pandas: make_reverse_mapping_pandas,
+    FrameWork.polars: make_reverse_mapping_polars,
     # FrameWork.spark: _calc_stability_spark,
 }
