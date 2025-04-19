@@ -6,7 +6,7 @@ from .missing import filter_missing_df, get_count_missing, fill_missing_df
 from .to_list import series_to_list
 from .max_min import get_max, get_min
 from .unique import get_unique, get_nunique
-from .convert import convert_df_to_pandas, convert_df_to_polars
+from .convert import convert_df_to_pandas, convert_df_to_polars, series_to_list
 from .concat import concat_series_to_frame, concat_df
 from .columns import (
     get_columns, drop_columns, set_column, reorder_columns,

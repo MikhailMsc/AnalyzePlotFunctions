@@ -28,7 +28,8 @@ def preprocess_df(
         map_values: MapDictMultiVars = None,
         validate_target: bool = True,
         drop_not_processed: bool = False,
-        _copy: bool = True
+        _copy: bool = True,
+        _bin_by_target: bool = True
 ) -> DataFrame:
     if not process_vars:
         if not ignore_vars:
@@ -39,7 +40,7 @@ def preprocess_df(
 
         process_vars = [col for col in get_columns(df) if col not in ignore_vars]
 
-    if validate_target:
+    if validate_target and target_name:
         validate_binary_target(get_series_from_df(df, target_name))
 
     if drop_not_processed:
@@ -71,18 +72,24 @@ def preprocess_df(
     if map_values:
         df = map_elements_df(df, map_values)
 
+    if target_name and _bin_by_target:
+        target_series = get_series_from_df(df, target_name)
+    else:
+        target_series = None
+
     for var_name in binning:
+        variable_series = get_series_from_df(df, var_name)
         if binning[var_name] is True:
             ser = binarize_series(
-                variable=get_series_from_df(df, var_name),
-                target=get_series_from_df(df, target_name),
+                variable=variable_series,
+                target=target_series,
                 validate_target=False,
                 _var_name=var_name
             )
         else:
             ser = binarize_series(
-                variable=get_series_from_df(df, var_name),
-                target=get_series_from_df(df, target_name),
+                variable=variable_series,
+                target=target_series,
                 validate_target=False,
                 bin_params=binning[var_name],
                 _var_name=var_name

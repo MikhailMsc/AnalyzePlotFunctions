@@ -59,7 +59,10 @@ def calc_concentration_report(
         map_values: MapDictMultiVars = None,
         pop_more: float = None,
         tr_less: float = None,
-        tr_more: float = None
+        tr_more: float = None,
+        _tqdm: bool = True,
+        _validate_target: bool = True,
+        _bin_by_target: bool = True
 ) -> DataFrame:
 
     if not analyze_vars:
@@ -80,7 +83,8 @@ def calc_concentration_report(
 
     df = preprocess_df(
         df, analyze_vars, None, target_name, binning,
-        map_values, True, False
+        map_values, _validate_target, False,
+        _bin_by_target=_bin_by_target
     )
     df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars)
     df = optimize_df_int_types(df, min_max_values)
@@ -102,9 +106,13 @@ def calc_concentration_report(
 
     for cnt in range(combo_min, combo_max + 1):
         cnt_combos = math.comb(len(analyze_vars), cnt)
-        bar_format = (f"{{l_bar}}{{bar}}| Комбинации из {cnt} переменных, {{n_fmt}}/{cnt_combos} "
-                      f"[{{elapsed}}<{{remaining}}, {{rate_fmt}}]")
-        for vars_combo in tqdm(itertools.combinations(analyze_vars, cnt), total=cnt_combos, bar_format=bar_format):
+        iter = itertools.combinations(analyze_vars, cnt)
+        if _tqdm:
+            bar_format = (f"{{l_bar}}{{bar}}| Комбинации из {cnt} переменных, {{n_fmt}}/{cnt_combos} "
+                          f"[{{elapsed}}<{{remaining}}, {{rate_fmt}}]")
+            iter = tqdm(iter, total=cnt_combos, bar_format=bar_format)
+
+        for vars_combo in iter:
             combo_report, max_id_segment = _calc_concentration_combo(
                 df, vars_combo, target_name, vars_order, start_id_segment, cnt_target)
             start_id_segment = max_id_segment + 1

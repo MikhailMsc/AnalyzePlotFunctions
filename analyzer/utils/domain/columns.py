@@ -1,7 +1,7 @@
 from analyzer.utils.general.column import Column
 
 C_VALUE = Column(name='Value')
-C_COUNT = Column(name='count')
+C_COUNT = Column(name='Count')
 C_PERCENT = Column(name='percent')
 C_VARNAME = Column(name='VarName')
 C_GROUP = Column(name='Group')
