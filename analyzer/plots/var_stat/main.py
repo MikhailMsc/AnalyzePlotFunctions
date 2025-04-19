@@ -7,16 +7,16 @@ from analyzer.stats import calc_iv_var, calc_var_groups_stat, SH_InformationValu
 from analyzer.preprocessing.preprocess import BinningParamsSingleVars, MapDictSingleVar
 from analyzer.utils.general.types import DataFrame
 from analyzer.utils.framework_depends import get_shape, get_series_from_df, series_to_list
-from analyzer.utils.domain.columns import C_POPULATION, C_TARGET_RATE, C_GROUP
+from analyzer.utils.domain.columns import C_POPULATION, C_TARGET_RATE, C_GROUP, C_GROUP_NUMBER
 
-from ..config import PlotConfig, apply_plot_config
-from ._image import prepare_plot_config
+from ..config import PlotConfig
+from ._image import prepare_plot_config, apply_plot_config
 
 
 def plot_var_stat(
         data: DataFrame, var_name: str, target_name: str = None,
         map_values: MapDictSingleVar = None, binning: BinningParamsSingleVars = True,
-        xlabel='Group', annotation: bool = True, plot_config: PlotConfig = None
+        annotation: bool = True, plot_config: PlotConfig = None
 ) -> Union[SH_InformationValueReport.t, SH_GroupsStatReport.t]:
 
     has_target = target_name is not None
@@ -25,7 +25,7 @@ def plot_var_stat(
     else:
         report: SH_GroupsStatReport.t = calc_var_groups_stat(data, var_name, binning, map_values)
 
-    plot_config, palette = prepare_plot_config(report, xlabel, has_target, plot_config)
+    plot_config, palette = prepare_plot_config(report, has_target, plot_config)
 
     with plt.style.context(plot_config.style):
         fig = plt.figure(figsize=plot_config.plot_size)
@@ -66,4 +66,5 @@ def plot_var_stat(
 
         apply_plot_config(plot_config, fig, ax1, ax2)
         plt.show()
+        report.drop(columns=[C_GROUP_NUMBER.n], inplace=True)
         return report

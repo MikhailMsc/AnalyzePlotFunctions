@@ -5,7 +5,6 @@ from analyzer.utils.domain.columns import (
     C_COUNT, C_TARGET, C_POPULATION, C_TARGET_POPULATION, C_TARGET_RATE, C_GROUP_IV,
     C_SEGMENT_ID, C_PARENT_MIN, C_PARENT_MAX, C_PARENT_MIN_TR, C_PARENT_MAX_TR
 )
-from analyzer.utils.domain.const import EPSILON
 from analyzer.utils.framework_depends import get_columns
 from analyzer.utils.general.types import DataFrame
 
@@ -40,8 +39,8 @@ def calc_concentration(
         (
             100 * (target_population - not_target_population).abs() *
             (
-                target_population /
-                pl.when(not_target_population == 0).then(EPSILON).otherwise(not_target_population)
+                pl.when(target_population == 0).then(1 / target_cnt).otherwise(target_population) /
+                pl.when(not_target_population == 0).then(1 / not_target_cnt).otherwise(not_target_population)
             ).log()
         ).alias(C_GROUP_IV.n),
     )

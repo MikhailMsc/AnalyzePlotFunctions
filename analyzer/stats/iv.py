@@ -4,8 +4,8 @@ import pandas as pd
 
 from analyzer.preprocessing import BinningParamsMultiVars, MapDictMultiVars, preprocess_df, MapDictSingleVar
 from analyzer.utils.domain.columns import (
-    C_GROUP, C_TOTAL, C_TARGET, C_POPULATION, C_TARGET_RATE, C_WOE,
-    C_GROUP_IV, C_TOTAL_IV, C_TARGET_POPULATION, C_VARNAME, C_GROUP_NUMBER
+    C_GROUP, C_TARGET, C_POPULATION, C_TARGET_RATE, C_WOE,
+    C_GROUP_IV, C_TOTAL_IV, C_TARGET_POPULATION, C_VARNAME, C_GROUP_NUMBER, C_COUNT
 )
 from analyzer.utils.framework_depends import convert_df_to_pandas
 
@@ -15,7 +15,7 @@ from analyzer.preprocessing.binning import BinningParams
 
 SH_InformationValueReport = SchemaDF(
     columns=[
-        C_VARNAME, C_GROUP_NUMBER, C_GROUP, C_TOTAL, C_TARGET, C_POPULATION, C_TARGET_POPULATION,
+        C_VARNAME, C_GROUP_NUMBER, C_GROUP, C_COUNT, C_TARGET, C_POPULATION, C_TARGET_POPULATION,
         C_TARGET_RATE, C_GROUP_IV, C_TOTAL_IV
     ],
     key=[C_VARNAME, C_GROUP_NUMBER]
@@ -93,19 +93,22 @@ def calc_iv_var(
 def _calc_iv_pandas(df: DataFrame, var_name: str, target_name: str) -> DataFrame:
     import numpy as np
     df = df.groupby(var_name, as_index=False).agg({target_name: ['size', 'sum']})
-    df.columns = [C_GROUP.n, C_TOTAL.n, C_TARGET.n]
+    df.columns = [C_GROUP.n, C_COUNT.n, C_TARGET.n]
 
-    total_sum = df[C_TOTAL.n].sum()
+    total_sum = df[C_COUNT.n].sum()
     target_sum = df[C_TARGET.n].sum()
     not_target_sum = total_sum - target_sum
 
-    df[C_POPULATION.n] = round(100 * df[C_TOTAL.n] / total_sum, 2)
+    df[C_POPULATION.n] = round(100 * df[C_COUNT.n] / total_sum, 2)
     target_population = df[C_TARGET.n] / target_sum
     df[C_TARGET_POPULATION.n] = round(100 * target_population, 2)
-    df[C_TARGET_RATE.n] = 100 * df[C_TARGET.n] / df[C_TOTAL.n]
+    df[C_TARGET_RATE.n] = 100 * df[C_TARGET.n] / df[C_COUNT.n]
 
-    not_target = df[C_TOTAL.n] - df[C_TARGET.n]
+    not_target = df[C_COUNT.n] - df[C_TARGET.n]
     not_target_population = not_target / not_target_sum
+
+    target_population.replace(0, 1 / target_sum, inplace=True)
+    not_target_population.replace(0, 1 / not_target_sum, inplace=True)
 
     df[C_WOE.n] = np.log(target_population / not_target_population)
     df[C_GROUP_IV.n] = 100 * (target_population - not_target_population).abs() * df[C_WOE.n]
@@ -117,24 +120,27 @@ def _calc_iv_polars(df: DataFrame, var_name: str, target_name: str) -> DataFrame
     import polars as pl
 
     df = df.group_by(var_name).agg(
-        pl.col(target_name).len().alias(C_TOTAL.n),
+        pl.col(target_name).len().alias(C_COUNT.n),
         pl.col(target_name).sum().alias(C_TARGET.n)
     ).rename({var_name: C_GROUP.n})
 
-    total_sum = df[C_TOTAL.n].sum()
+    total_sum = df[C_COUNT.n].sum()
     target_sum = df[C_TARGET.n].sum()
     not_target_sum = total_sum - target_sum
 
     target_population = df[C_TARGET.n] / target_sum
 
     df = df.with_columns(
-        (100 * pl.col(C_TOTAL.n) / total_sum).round(2).alias(C_POPULATION.n),
+        (100 * pl.col(C_COUNT.n) / total_sum).round(2).alias(C_POPULATION.n),
         (100 * target_population).round(2).alias(C_TARGET_POPULATION.n),
-        (100 * pl.col(C_TARGET.n) / pl.col(C_TOTAL.n)).alias(C_TARGET_RATE.n),
+        (100 * pl.col(C_TARGET.n) / pl.col(C_COUNT.n)).alias(C_TARGET_RATE.n),
     )
 
-    not_target = df[C_TOTAL.n] - df[C_TARGET.n]
+    not_target = df[C_COUNT.n] - df[C_TARGET.n]
     not_target_population = not_target / not_target_sum
+
+    target_population = target_population.replace(0, 1 / target_sum)
+    not_target_population = not_target_population.replace(0, 1 / not_target_sum)
 
     df = df.with_columns((target_population / not_target_population).log().alias(C_WOE.n))
     df = df.with_columns(

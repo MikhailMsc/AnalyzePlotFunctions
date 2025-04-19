@@ -115,7 +115,8 @@ def calc_stability(
                 (pl.col(C_TARGET_POPULATION_SECONDARY.n) - pl.col(C_TARGET_POPULATION_MAIN.n)) * (
                     pl.when(pl.col(C_TARGET_POPULATION_SECONDARY.n) == 0).
                         then(EPSILON).otherwise(pl.col(C_TARGET_POPULATION_SECONDARY.n)) /
-                    pl.when(pl.col(C_TARGET_POPULATION_MAIN.n) == 0).then(EPSILON).otherwise(pl.col(C_TARGET_POPULATION_MAIN.n))
+                    pl.when(pl.col(C_TARGET_POPULATION_MAIN.n) == 0).
+                        then(EPSILON).otherwise(pl.col(C_TARGET_POPULATION_MAIN.n))
                 ).log().abs()
             ).alias(C_TARGET_STABILITY.n)
         )

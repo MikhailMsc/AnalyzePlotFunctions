@@ -18,7 +18,9 @@ def value_counts(series: Series, sort: bool):
 def _value_counts_pandas(series: Series, sort: bool) -> DataFrame:
     stats = series.value_counts(dropna=False)
     if sort:
-        stats = stats.sort_index(ascending=True).reset_index()
+        stats = stats.sort_index(ascending=True)
+    stats = stats.reset_index(drop=False)
+    stats.rename(columns={'count': C_COUNT.n}, inplace=True)
     stats[C_PERCENT.n] = 100 * stats[C_COUNT.n] / stats[C_COUNT.n].sum()
     stats.columns = [C_VALUE.n, C_COUNT.n, C_PERCENT.n]
     return stats
