@@ -1,11 +1,8 @@
-from typing import Union, Dict, List
+from typing import Union
 
-import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib.collections import PatchCollection
 import seaborn as sns
 
-from analyzer.preprocessing import MapDictMultiVars, BinningParamsMultiVars, preprocess_df
+from analyzer.preprocessing import MapDictMultiVars, BinningParamsMultiVars
 from analyzer.utils.general.types import DataFrame
 from analyzer.stats import calc_concentration_report, SH_ConcentrationReport
 from analyzer.utils.framework_depends import get_sub_df, set_column, drop_columns
@@ -14,10 +11,11 @@ from analyzer.utils.domain.columns import (
     C_PARENT_MIN, C_PARENT_MAX, C_PARENT_MIN_TR, C_PARENT_MAX_TR
 )
 
-from ._order_values import get_order_vars_values
-from ._image import split_palette, prepare_plot_config_heatmap, get_all_axes, apply_plot_config_heatmap, \
-    DEFAULT_COLORMAP
 from ..config import PlotConfig
+from ._order_values import get_order_vars_values
+from ._utils import split_palette, DEFAULT_COLORMAP
+from ._circles import plot_circles
+from ._heatmap import plot_heatmap
 
 
 def plot_cross_vars(
@@ -49,7 +47,8 @@ def plot_cross_vars(
         map_values=map_values,
         _tqdm=False,
         _validate_target=has_target,
-        _bin_by_target=has_target
+        _bin_by_target=has_target,
+        _logging=False
     )
 
     if not has_target:
@@ -62,7 +61,7 @@ def plot_cross_vars(
         )
 
     plot_report = report[~report['Var2_Name'].isnull()]
-    plot_report = plot_report[plot_report[C_POPULATION.n] >= min_population]
+    plot_report = plot_report[plot_report[C_POPULATION.n] >= min_population].reset_index(drop=True)
 
     hist_report = report[report['Var2_Name'].isnull()]
     _hist_report = dict()
@@ -128,14 +127,24 @@ def plot_cross_vars(
         palette_x_top = palette_y_right = None
 
     if circles:
-        raise NotImplementedError
+        plot_circles(
+            var_name_1, var_name_2, colorbar, histogram,
+            plot_config, population_stats, target_stats,
+            hist_report, palette_main, palette_x_top, palette_y_right,
+            order_vars_values, labels
+        )
     else:
-        _plot_heatmap(
+        plot_heatmap(
             var_name_1, var_name_2, colorbar, histogram,
             plot_config, target_stats if has_target else population_stats,
             hist_report, labels, palette_main, palette_x_top, palette_y_right,
             _resize
         )
+
+    var_name_1 = plot_report['Var1_Name'][0]
+    var_name_2 = plot_report['Var2_Name'][0]
+    plot_report.rename(columns={'Var1_Value': var_name_1, 'Var2_Value': var_name_2}, inplace=True)
+    plot_report.drop(columns=['Var1_Name', 'Var2_Name'], inplace=True)
     return plot_report
 
 
@@ -149,106 +158,3 @@ def _prepare_labels(pop_stat, tr_stat):
     return labels.to_numpy()
 
 
-def _plot_heatmap(
-        var_name_1: str, var_name_2: str, colorbar: bool, histogram: bool,
-        plot_config: Union[PlotConfig, None],
-        plot_stats: DataFrame, hist_report: Dict[str, DataFrame],
-        labels: DataFrame, palette_main, palette_x_top, palette_y_right,
-        resize: bool,
-):
-    plot_config = prepare_plot_config_heatmap(
-        var_name_1, var_name_2, colorbar, histogram, plot_stats.shape, resize, plot_config,
-
-    )
-
-    with plt.style.context(plot_config.style):
-        fig, ax_main, ax_hist_top, ax_hist_right, ax_colorbar = get_all_axes(plot_config, colorbar, histogram)
-        cross_plot = sns.heatmap(
-            plot_stats,
-            cmap=palette_main,
-            cbar=False, linewidths=plot_config.grig_widths,
-            annot=labels, annot_kws={'size': plot_config.annotation_font_size}, fmt='',
-            ax=ax_main
-        )
-        cross_plot.invert_yaxis()
-
-        if histogram:
-            ax_hist_right.barh(
-                y=np.arange(hist_report[var_name_2].shape[0]) + 0.5,
-                height=plot_config.bar_width,
-                width=hist_report[var_name_2][C_POPULATION.n],
-                align='center', color=palette_y_right
-            )
-            plt.setp(ax_hist_right.get_yticklabels(), visible=False)
-
-            ax_hist_top.bar(
-                x=np.arange(hist_report[var_name_1].shape[0]) + 0.5,
-                width=plot_config.bar_width,
-                height=hist_report[var_name_1][C_POPULATION.n],
-                align='center', color=palette_x_top
-            )
-            plt.setp(ax_hist_top.get_xticklabels(), visible=False)
-
-        if colorbar:
-            if plot_config.cbar_location in ['right', 'left']:
-                cbar_orientation = 'vertical'
-            else:
-                cbar_orientation = 'horizontal'
-            plt.colorbar(ax_main.get_children()[0], cax=ax_colorbar, orientation=cbar_orientation)
-
-        apply_plot_config_heatmap(plot_config, fig, ax_main, ax_hist_top, ax_hist_right, ax_colorbar)
-        plt.show()
-
-
-def _plot_circles(
-    var_name_1: str, var_name_2: str, colorbar: bool, histogram: bool,
-    plot_config: Union[PlotConfig, None], population_stats: DataFrame,
-    target_stats: Union[DataFrame, None], hist_report: Dict[str, DataFrame],
-    order_vars_values: Dict[str, List], labels: DataFrame
-):
-    plot_config = prepare_plot_config_heatmap(
-        var_name_1, var_name_2, colorbar, histogram, plot_config
-    )
-    has_target = target_stats is not None
-    value_column = C_TARGET_RATE.n if has_target else C_POPULATION.n
-
-    with plt.style.context(plot_config.style):
-        fig, ax_main, ax_hist_top, ax_hist_right, ax_colorbar = get_all_axes(plot_config, colorbar, histogram)
-
-        x, y = np.meshgrid(order_vars_values[var_name_1], order_vars_values[var_name_2])
-        radius = (population_stats / population_stats.max().max()) / 2
-        circles = [
-            (
-                plt.Circle((x, y), radius=radius.loc[y_lbl, x_lbl]),
-                (target_stats if has_target else population_stats).loc[y_lbl, x_lbl]
-            )
-            for x, x_lbl in enumerate(order_vars_values[var_name_1])
-            for y, y_lbl in enumerate(order_vars_values[var_name_2])
-        ]
-        circles, rate = zip(*circles)
-        col = PatchCollection(circles, array=rate, cmap=plot_config.colormap)
-        ax_main.add_collection(col)
-
-        cnt_x_values = len(order_vars_values[var_name_1])
-        cnt_y_values = len(order_vars_values[var_name_2])
-        ax_main.set(
-            xticks=np.arange(cnt_x_values),
-            yticks=np.arange(cnt_y_values),
-            xticklabels=order_vars_values[var_name_1],
-            yticklabels=order_vars_values[var_name_2]
-        )
-        ax_main.set_xticks(np.arange(cnt_x_values + 1) - 0.5, minor=True)
-        ax_main.set_yticks(np.arange(cnt_y_values + 1) - 0.5, minor=True)
-
-        for y_i in range(cnt_y_values):
-            for x_i in range(cnt_x_values):
-                txt = labels[y_i, x_i]
-                if txt is np.nan:
-                    txt = ''
-                ax_main.annotate(
-                    txt, xy=(x_i, y_i + 0.25),
-                    fontsize=plot_config.annotation_font_size,
-                    horizontalalignment='center'
-                )
-
-        ax_main.grid(which='minor')

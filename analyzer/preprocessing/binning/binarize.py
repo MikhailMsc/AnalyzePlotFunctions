@@ -6,6 +6,7 @@ from analyzer.utils.general.utils import pretty_number
 
 from .cutoffs import get_var_cutoffs
 from .params import BinningParams, default_bin_params
+from ...utils.framework_depends.columns import is_convertable_to_int_column
 
 
 def binarize_series(
@@ -14,6 +15,9 @@ def binarize_series(
 ) -> Series:
     if bin_params.cutoffs is None:
         cutoffs = get_var_cutoffs(variable, target, bin_params, validate_target)
+        if len(cutoffs) > 2 and is_convertable_to_int_column(variable):
+            import numpy as np
+            cutoffs = [MIN, ] + [int(np.floor(v)) for v in cutoffs[1:-1]] + [MAX,]
     else:
         validate_column_for_binning(variable, _var_name)
         cutoffs = [MIN, ] + bin_params.cutoffs + [MAX,]

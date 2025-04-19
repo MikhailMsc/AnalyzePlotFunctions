@@ -9,39 +9,39 @@ AVAILABLE_STYLES = plt.style.available[:]
 @dataclass
 class PlotConfig:
     style: Literal[*AVAILABLE_STYLES] = None
-    plot_size: Tuple[int, int] = None
+    plot_size: Tuple[float, float] = None
 
     colormap: str = None
     color: str = None
     color2: str = None
 
-    annotation_delta: int = 0
-    annotation_font_size: int = 10
+    annotation_delta: float = 0
+    annotation_font_size: float = 10
 
     title: str = None
-    title_size: int = 18
+    title_size: float = 18
     title_pad: float = 0.0
 
     xlabel: str = ''
-    xlabel_size: int = 15
-    xtick_size: int = 10
+    xlabel_size: float = 15
+    xtick_size: float = 10
     x_rotation: float = None
     x_grid: bool = True
-    xmax: Union[float, int] = None
-    xmin: Union[float, int] = None
+    xmax: float = None
+    xmin: float = None
 
     ylabel: str = ''
-    ylabel_size: int = 15
-    ytick_size: int = 10
+    ylabel_size: float = 15
+    ytick_size: float = 10
     y_rotation: float = None
     y_grid: bool = True
-    ymax: Union[float, int] = None
-    ymin: Union[float, int] = None
+    ymax: float = None
+    ymin: float = None
 
     y2label: str = ''
     y2_grid: bool = False
-    y2max: Union[float, int] = None
-    y2min: Union[float, int] = None
+    y2max: float = None
+    y2min: float = None
 
     x_to_top: bool = False
     x_inverse: bool = False

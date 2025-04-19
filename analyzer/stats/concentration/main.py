@@ -62,7 +62,8 @@ def calc_concentration_report(
         tr_more: float = None,
         _tqdm: bool = True,
         _validate_target: bool = True,
-        _bin_by_target: bool = True
+        _bin_by_target: bool = True,
+        _logging: bool = True
 ) -> DataFrame:
 
     if not analyze_vars:
@@ -170,7 +171,8 @@ def calc_concentration_report(
     full_report = schema_out(full_report, reorder_colums=True)
     full_report = convert_df_to_pandas(full_report)
 
-    logger.log_info(info_msg)
+    if _logging:
+        logger.log_info(info_msg)
     return full_report
 
 
