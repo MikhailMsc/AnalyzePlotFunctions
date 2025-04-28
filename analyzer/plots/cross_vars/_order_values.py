@@ -2,7 +2,7 @@ import re
 from typing import List, Union
 
 from analyzer.utils.domain.columns import C_TARGET_RATE, C_POPULATION
-from analyzer.utils.domain.const import MISSING
+from analyzer.utils.domain.const import MISSING, NOT_MISSING
 
 
 def get_order_vars_values(df, has_target) -> List[str]:
@@ -12,6 +12,12 @@ def get_order_vars_values(df, has_target) -> List[str]:
     if MISSING in values:
         ordered_values.append(MISSING)
         values = [v for v in values if v != MISSING]
+
+    if NOT_MISSING in values:
+        ordered_values.append(NOT_MISSING)
+        values = [v for v in values if v != NOT_MISSING]
+        assert not values
+        return ordered_values
 
     types_values = set([type(v) for v in values])
     assert len(types_values) == 1

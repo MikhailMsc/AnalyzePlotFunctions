@@ -63,7 +63,8 @@ def calc_concentration_report(
         _tqdm: bool = True,
         _validate_target: bool = True,
         _bin_by_target: bool = True,
-        _logging: bool = True
+        _logging: bool = True,
+        _drop_single_vals: bool = True
 ) -> DataFrame:
 
     if not analyze_vars:
@@ -90,13 +91,14 @@ def calc_concentration_report(
     df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars)
     df = optimize_df_int_types(df, min_max_values)
 
-    var_single_value = [var for var, cnt in get_nunique(df, columns=analyze_vars).items() if cnt == 1]
-    if len(var_single_value) > 0:
-        msg = f'Некоторые переменные ({len(var_single_value)}) имеют одно значение, они будут исключены из анализа:\n\t'
-        msg = msg + '\n\t'.join(var_single_value)
-        logger.log_debug(msg)
-        var_single_value = set(var_single_value)
-        analyze_vars = [var for var in analyze_vars if var not in var_single_value]
+    if _drop_single_vals:
+        var_single_value = [var for var, cnt in get_nunique(df, columns=analyze_vars).items() if cnt == 1]
+        if len(var_single_value) > 0:
+            msg = f'Некоторые переменные ({len(var_single_value)}) имеют одно значение, они будут исключены из анализа:\n\t'
+            msg = msg + '\n\t'.join(var_single_value)
+            logger.log_debug(msg)
+            var_single_value = set(var_single_value)
+            analyze_vars = [var for var in analyze_vars if var not in var_single_value]
 
     vars_order = {var: i for i, var in enumerate(analyze_vars)}
     vars_revers_order = {i: var for var, i in vars_order.items()}

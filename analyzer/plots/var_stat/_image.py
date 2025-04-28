@@ -4,8 +4,7 @@ from typing import List, Tuple
 import seaborn as sns
 
 from analyzer.utils.general.types import DataFrame
-from analyzer.utils.framework_depends import get_series_from_df, get_shape, series_to_list
-from analyzer.utils.domain.columns import C_POPULATION, C_TARGET_RATE
+from analyzer.utils.framework_depends import get_shape
 
 from ..config import PlotConfig
 
@@ -17,17 +16,13 @@ DEFAULT_PLOT_CONFIG = PlotConfig(
     y2label='Target Rate(%)',
     color2='red',
     colormap='Blues',
-    annotation_delta=0.3,
     xlabel_size=13.5,
     ylabel_size=13.5,
     style='fast'
 )
 
 
-def prepare_plot_config(
-        report: DataFrame, has_target: bool,
-        plot_config: PlotConfig = None
-) -> Tuple[PlotConfig, List]:
+def prepare_plot_config(report: DataFrame, plot_config: PlotConfig = None) -> Tuple[PlotConfig, List]:
     default_config = copy(DEFAULT_PLOT_CONFIG)
     if plot_config is None:
         plot_config = default_config
@@ -36,9 +31,6 @@ def prepare_plot_config(
 
     if plot_config.color is None:
         palette = sns.color_palette(plot_config.colormap, get_shape(report)[0]).as_hex()
-        order_by = get_series_from_df(report, C_TARGET_RATE.n if has_target else C_POPULATION.n)
-        order_by = series_to_list(order_by)
-        palette = _reorder_palette(palette, order_by)
     else:
         palette = []
     return plot_config, palette

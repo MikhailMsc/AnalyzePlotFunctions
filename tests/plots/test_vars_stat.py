@@ -10,3 +10,13 @@ def test_var_stat_PD():
         df, var_name='Age', target_name='Survived', binning=BinningParams(min_prc=10),
         annotation=True, plot_config=None
     )
+
+
+def test_var_stat_anomaly():
+    import pandas as pd
+    df = pd.read_csv('../titanic.csv', sep=',')
+
+    plot_var_stat(
+        df, var_name='Survived', binning=False,
+        annotation=True, plot_config=None
+    )

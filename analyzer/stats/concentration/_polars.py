@@ -39,8 +39,8 @@ def calc_concentration(
         (
             100 * (target_population - not_target_population).abs() *
             (
-                pl.when(target_population == 0).then(1 / target_cnt).otherwise(target_population) /
-                pl.when(not_target_population == 0).then(1 / not_target_cnt).otherwise(not_target_population)
+                pl.when(target_population == 0).then(1 / (target_cnt or not_target_cnt)).otherwise(target_population) /
+                pl.when(not_target_population == 0).then(1 / (not_target_cnt or target_cnt)).otherwise(not_target_population)
             ).log()
         ).alias(C_GROUP_IV.n),
     )
@@ -50,7 +50,8 @@ def calc_concentration(
 def merge_nearest_segments_pl(report, map_func):
     import polars as pl
     report = report.with_columns(
-        pl.col(C_SEGMENT_ID.n).map_elements(map_func).alias('min_max_segments')
+        pl.col(C_SEGMENT_ID.n).map_elements(map_func, return_dtype=pl.List(pl.List(pl.Int64))).
+        alias('min_max_segments')
     )
     report = report.with_columns(
         pl.col('min_max_segments').list.get(0).list.get(0).alias('min_tg_segment_id'),
@@ -141,7 +142,9 @@ def extract_dict_segments_polars(df: DataFrame, vars_order: Dict):
     def make_segment(arr):
         return [(arr[i], arr[i+1]) for i in range(0, len(arr), 2) if arr[i+1] is not None]
 
-    segments = segments.with_columns(pl.col('segment').map_elements(make_segment).alias('segment'))
+    segments = segments.with_columns(pl.col('segment').map_elements(
+        make_segment, return_dtype=pl.List(pl.List(pl.Int64))
+    ).alias('segment'))
     segment_info = [tuple([tuple(combo) for combo in seg]) for seg in segments['segment'].to_list()]
     segment_id = df[C_SEGMENT_ID.n].to_list()
     target_rate = df[C_TARGET_RATE.n].to_list()

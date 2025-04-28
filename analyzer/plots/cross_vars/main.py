@@ -26,7 +26,6 @@ def plot_cross_vars(
         min_population: float = 0,
         circles: bool = False,
         _resize: bool = True
-
 ) -> Union[SH_ConcentrationReport.t]:
     """
     План решения:
@@ -48,7 +47,8 @@ def plot_cross_vars(
         _tqdm=False,
         _validate_target=has_target,
         _bin_by_target=has_target,
-        _logging=False
+        _logging=False,
+        _drop_single_vals=False
     )
 
     if not has_target:
@@ -77,8 +77,8 @@ def plot_cross_vars(
         _hist_report[var] = sub_report
 
     hist_report = _hist_report
-    vars_cnt_values = {v: len(v) for v, vals in order_vars_values.items()}
-    if vars_cnt_values[var_name_1] > vars_cnt_values[var_name_2]:
+    vars_cnt_values = {v: len(vals) for v, vals in order_vars_values.items()}
+    if vars_cnt_values[var_name_1] <= vars_cnt_values[var_name_2]:
         var_name_1, var_name_2 = var_name_2, var_name_1
 
     var_value_x, var_value_y = (
@@ -143,8 +143,14 @@ def plot_cross_vars(
 
     var_name_1 = plot_report['Var1_Name'][0]
     var_name_2 = plot_report['Var2_Name'][0]
+
+    map_dict = {var: {val: i for i, val in enumerate(vals)} for var, vals in order_vars_values.items()}
+    plot_report['Var1_Value_Order'] = plot_report['Var1_Value'].apply(lambda x: map_dict[var_name_1][x])
+    plot_report['Var2_Value_Order'] = plot_report['Var2_Value'].apply(lambda x: map_dict[var_name_2][x])
+    plot_report = plot_report.sort_values(['Var1_Value_Order', 'Var2_Value_Order']).reset_index(drop=True)
     plot_report.rename(columns={'Var1_Value': var_name_1, 'Var2_Value': var_name_2}, inplace=True)
-    plot_report.drop(columns=['Var1_Name', 'Var2_Name'], inplace=True)
+    plot_report.drop(columns=['Var1_Name', 'Var2_Name','Var1_Value_Order', 'Var2_Value_Order'], inplace=True)
+
     return plot_report
 
 

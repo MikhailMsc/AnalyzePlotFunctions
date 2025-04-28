@@ -36,9 +36,16 @@ def test_cross_PD():
     print(_)
 
 
+def test_cross_anomaly():
+    import pandas as pd
+    df = pd.read_csv('../titanic.csv', sep=',')
 
-"""
-        data: DataFrame, var_name_1: str, var_name_2: str, target_name: str = None,
-        map_values: MapDictMultiVars = None, binning: BinningParamsMultiVars = True,
-        annotation: bool = True, plot_config: PlotConfig = None
-"""
+    plot_cross_vars(
+        df, var_name_1='Age', var_name_2='Parch', min_population=0,
+        annotation=True, plot_config=None,
+        target_name='Survived',
+        binning=BinningParams(min_prc=25),
+        histogram=True,
+        colorbar=False,
+        circles=True
+    )

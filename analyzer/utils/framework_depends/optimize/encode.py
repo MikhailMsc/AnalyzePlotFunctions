@@ -46,7 +46,7 @@ def encode_df(
         map_vars[col] = map_values
         reverse_map_vars[col] = reverse_map_values
 
-    df = map_elements_df(df, map_vars)
+    df = map_elements_df(df, map_vars, 'int16')
     return df, reverse_map_vars, min_max_values
 
 

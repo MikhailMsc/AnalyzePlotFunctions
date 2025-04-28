@@ -50,7 +50,7 @@ def _calc_var_groups_stat_pd(df: DataFrame, var_name: str):
 def _calc_var_groups_stat_pl(df: DataFrame, var_name: str):
     import polars as pl
 
-    df = df.group_by(var_name).len().rename({var_name: C_GROUP.n, 'count': C_TOTAL.n})
+    df = df.group_by(var_name).len().rename({var_name: C_GROUP.n, 'len': C_TOTAL.n})
     total_sum = df[C_TOTAL.n].sum()
     df = df.with_columns(
         (100 * pl.col(C_TOTAL.n) / total_sum).round(2).alias(C_POPULATION.n)

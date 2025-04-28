@@ -71,7 +71,7 @@ def _apply_cutoffs_polars(series: Series, cutoffs: list):
 
     has_missing = series.is_null().sum() > 0
     if cutoffs == [MIN, MAX]:
-        series = series.is_null().map_elements(lambda x: MISSING if x else NOT_MISSING)
+        series = series.is_null().map_elements(lambda x: MISSING if x else NOT_MISSING, return_dtype=pl.String)
         if has_missing:
             categories = [MISSING, NOT_MISSING]
         else:

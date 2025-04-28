@@ -15,8 +15,8 @@ class PlotConfig:
     color: str = None
     color2: str = None
 
-    annotation_delta: float = 0
-    annotation_font_size: float = 10
+    annotation_delta: float = None
+    annotation_font_size: float = None
 
     title: str = None
     title_size: float = 18

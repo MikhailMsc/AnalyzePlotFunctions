@@ -25,7 +25,7 @@ def plot_var_stat(
     else:
         report: SH_GroupsStatReport.t = calc_var_groups_stat(data, var_name, binning, map_values)
 
-    plot_config, palette = prepare_plot_config(report, has_target, plot_config)
+    plot_config, palette = prepare_plot_config(report, plot_config)
 
     with plt.style.context(plot_config.style):
         fig = plt.figure(figsize=plot_config.plot_size)
@@ -33,7 +33,9 @@ def plot_var_stat(
 
         x = series_to_list(get_series_from_df(report, C_GROUP.n))
         y = series_to_list(get_series_from_df(report, C_POPULATION.n))
-        plot_config.ymax = max(y) + 7
+
+        plot_config.ymax = max(y) * 1.15
+        plot_config.annotation_delta = max(y) * 0.03
 
         if has_target:
             z = series_to_list(get_series_from_df(report, C_TARGET_RATE.n))
@@ -43,7 +45,8 @@ def plot_var_stat(
         sns.barplot(
             x=x, y=y,
             ax=ax1, data=report, color=plot_config.color, hue=z,
-            palette=palette or None, legend=False
+            palette=palette or None,
+            legend=False
         )
 
         if has_target:
