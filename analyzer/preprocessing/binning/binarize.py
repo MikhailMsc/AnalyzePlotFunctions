@@ -94,7 +94,10 @@ def _apply_cutoffs_polars(series: Series, cutoffs: list):
         cutoffs = cutoffs[1:-1]
 
         # labels = labels,
-        series = series.cut(breaks=cutoffs, labels=labels, left_closed=False)
+        try:
+            series = series.cut(breaks=cutoffs, labels=labels, left_closed=False)
+        except Exception as ex:
+            print('kek')
         if has_missing:
             categories = pl.Enum([MISSING, ] + labels)
             series = series.cast(categories)

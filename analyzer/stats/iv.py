@@ -1,13 +1,14 @@
 from typing import List, Union, Tuple
 
 import pandas as pd
+from tqdm import tqdm
 
 from analyzer.preprocessing import BinningParamsMultiVars, MapDictMultiVars, preprocess_df, MapDictSingleVar
 from analyzer.utils.domain.columns import (
     C_GROUP, C_TARGET, C_POPULATION, C_TARGET_RATE, C_WOE,
     C_GROUP_IV, C_TOTAL_IV, C_TARGET_POPULATION, C_VARNAME, C_GROUP_NUMBER, C_COUNT
 )
-from analyzer.utils.framework_depends import convert_df_to_pandas
+from analyzer.utils.framework_depends import convert_df_to_pandas, get_columns
 
 from analyzer.utils.general.schema import SchemaDF
 from analyzer.utils.general.types import DataFrame, get_framework_from_dataframe, FrameWork
@@ -27,16 +28,24 @@ SH_ShortInformationValueReport = SchemaDF(columns=[C_VARNAME, C_TOTAL_IV], key=[
 def calc_iv_report(
         df: DataFrame, target_name: str, analyze_vars: List[str] = None, ignore_vars: List[str] = None,
         binning: BinningParamsMultiVars = True,
-        map_values: MapDictMultiVars = None, sort_by_iv: bool = True
+        map_values: MapDictMultiVars = None, sort_by_iv: bool = True,
+        _tqdm: bool = True
 ) -> Tuple[SH_ShortInformationValueReport.t, SH_InformationValueReport.t]:
 
     df = preprocess_df(
         df, analyze_vars, ignore_vars, target_name, binning,
         map_values, True, True
     )
+    analyze_vars = [col for col in get_columns(df) if col != target_name]
+    if _tqdm:
+        bar_format = (f"{{l_bar}}{{bar}}| Расчет IV отчета, {{n_fmt}}/{len(analyze_vars)} "
+                      f"[{{elapsed}}<{{remaining}}, {{rate_fmt}}]")
+        iter_obj = tqdm(analyze_vars, total=len(analyze_vars), bar_format=bar_format)
+    else:
+        iter_obj = analyze_vars
 
     total_report = []
-    for var_name in analyze_vars:
+    for var_name in iter_obj:
         single_report = calc_iv_var(
             df=df, var_name=var_name, target_name=target_name,
             binning=False,
@@ -75,7 +84,7 @@ def calc_iv_var(
 
         df = preprocess_df(
             df, [var_name], target_name=target_name, binning=binning,
-            map_values=map_values, validate_target=validate_target, drop_not_processed=True
+            map_values=map_values, validate_target=validate_target, drop_not_processed=True, _tqdm=False
         )
 
     framework = get_framework_from_dataframe(df)
@@ -92,7 +101,7 @@ def calc_iv_var(
 
 def _calc_iv_pandas(df: DataFrame, var_name: str, target_name: str) -> DataFrame:
     import numpy as np
-    df = df.groupby(var_name, as_index=False).agg({target_name: ['size', 'sum']})
+    df = df.groupby(var_name, as_index=False, observed=True).agg({target_name: ['size', 'sum']})
     df.columns = [C_GROUP.n, C_COUNT.n, C_TARGET.n]
 
     total_sum = df[C_COUNT.n].sum()

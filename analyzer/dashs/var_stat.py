@@ -88,7 +88,7 @@ class VarStatDash:
         self._min_prc = widgets.IntSlider(
             value=20,
             min=10,
-            max=50,
+            max=40,
             description='Мин. бакет, %:',
             disabled=False,
             orientation='vertical',
@@ -281,7 +281,7 @@ def _plot_func(df, var1, var2, target, min_prc, circles):
         # Cross Plot
         df = preprocess_df(
             df, [var1, var2], None, target, BinningParams(min_prc=min_prc),
-            None, False, False
+            None, False, False, _tqdm=False
         )
 
         cnt_groups = get_nunique(df, [var1, var2])

@@ -30,7 +30,7 @@ class PlotConfig:
     xmax: float = None
     xmin: float = None
 
-    ylabel: str = ''
+    ylabel: str = None
     ylabel_size: float = 15
     ytick_size: float = 10
     y_rotation: float = None
@@ -38,7 +38,7 @@ class PlotConfig:
     ymax: float = None
     ymin: float = None
 
-    y2label: str = ''
+    y2label: str = None
     y2_grid: bool = False
     y2max: float = None
     y2min: float = None

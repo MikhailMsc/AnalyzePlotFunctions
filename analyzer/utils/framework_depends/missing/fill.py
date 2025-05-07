@@ -10,6 +10,16 @@ def fill_missing_df(df: DataFrame, columns_values: Dict[str, Any]) -> DataFrame:
 
 
 def _fill_missing_df_pandas(df: DataFrame, columns_values: Dict[str, Any]) -> DataFrame:
+    for col in df.columns:
+        if col not in columns_values:
+            continue
+
+        if df[col].dtype.name == 'category':
+            if df[col].isnull().sum() > 0:
+                df[col] = df[col].cat.add_categories([columns_values[col]])
+            else:
+                del columns_values[col]
+
     return df.fillna(columns_values)
 
 

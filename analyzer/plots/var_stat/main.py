@@ -16,7 +16,8 @@ from ._image import prepare_plot_config, apply_plot_config
 def plot_var_stat(
         data: DataFrame, var_name: str, target_name: str = None,
         map_values: MapDictSingleVar = None, binning: BinningParamsSingleVars = True,
-        annotation: bool = True, plot_config: PlotConfig = None
+        annotation: bool = True, plot_config: PlotConfig = None,
+        _mark_bar = None,
 ) -> Union[SH_InformationValueReport.t, SH_GroupsStatReport.t]:
 
     has_target = target_name is not None
@@ -42,12 +43,23 @@ def plot_var_stat(
         else:
             z = y
 
-        sns.barplot(
-            x=x, y=y,
-            ax=ax1, data=report, color=plot_config.color, hue=z,
-            palette=palette or None,
-            legend=False
-        )
+        if _mark_bar is None:
+            sns.barplot(
+                x=x, y=y,
+                ax=ax1, data=report, color=plot_config.color, hue=z,
+                palette=palette or None,
+                legend=False
+            )
+        else:
+            palette = sns.color_palette('Greys', 100).as_hex()
+            marked_bar = [v == _mark_bar for v in x]
+
+            sns.barplot(
+                x=x, y=y,
+                ax=ax1, data=report, hue=marked_bar,
+                palette=[palette[10], palette[-1]],
+                legend=False
+            )
 
         if has_target:
             y2 = series_to_list(get_series_from_df(report, C_TARGET_RATE.n))

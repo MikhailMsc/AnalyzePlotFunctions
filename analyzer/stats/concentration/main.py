@@ -8,7 +8,7 @@ from analyzer import logger
 from analyzer.preprocessing import BinningParamsMultiVars, MapDictMultiVars, preprocess_df
 from analyzer.utils.domain.columns import (
     C_COUNT, C_POPULATION, C_TARGET, C_TARGET_RATE, C_TARGET_POPULATION, C_GROUP_IV,
-    C_VARNAME, C_VALUE, C_PARENT_MIN, C_PARENT_MAX, C_PARENT_MIN_TR, C_PARENT_MAX_TR
+    C_VARNAME, C_VALUE, C_PARENT_MIN, C_PARENT_MAX, C_PARENT_MIN_TR, C_PARENT_MAX_TR, C_SEGMENT_ID
 )
 from analyzer.utils.framework_depends import (
     get_columns, get_sub_df, encode_df, optimize_df_int_types, set_column,
@@ -73,9 +73,12 @@ def calc_concentration_report(
             analyze_vars = analyze_vars - set(ignore_vars)
 
         analyze_vars.remove(target_name)
-        analyze_vars = sorted(list(analyze_vars))
+        analyze_vars = list(analyze_vars)
 
-    select_cols = analyze_vars[:] + [target_name, ]
+    assert target_name not in analyze_vars
+    analyze_vars = sorted(analyze_vars)
+
+    select_cols = analyze_vars + [target_name, ]
     df = get_sub_df(df, select_cols)
 
     framework = get_framework_from_dataframe(df)
@@ -86,7 +89,7 @@ def calc_concentration_report(
     df = preprocess_df(
         df, analyze_vars, None, target_name, binning,
         map_values, _validate_target, False,
-        _bin_by_target=_bin_by_target
+        _bin_by_target=_bin_by_target, _copy=False
     )
     df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars)
     df = optimize_df_int_types(df, min_max_values)
@@ -109,13 +112,13 @@ def calc_concentration_report(
 
     for cnt in range(combo_min, combo_max + 1):
         cnt_combos = math.comb(len(analyze_vars), cnt)
-        iter = itertools.combinations(analyze_vars, cnt)
+        iter_obj = itertools.combinations(analyze_vars, cnt)
         if _tqdm:
             bar_format = (f"{{l_bar}}{{bar}}| Комбинации из {cnt} переменных, {{n_fmt}}/{cnt_combos} "
                           f"[{{elapsed}}<{{remaining}}, {{rate_fmt}}]")
-            iter = tqdm(iter, total=cnt_combos, bar_format=bar_format)
+            iter_obj = tqdm(iter_obj, total=cnt_combos, bar_format=bar_format)
 
-        for vars_combo in iter:
+        for vars_combo in iter_obj:
             combo_report, max_id_segment = _calc_concentration_combo(
                 df, vars_combo, target_name, vars_order, start_id_segment, cnt_target)
             start_id_segment = max_id_segment + 1

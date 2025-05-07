@@ -61,7 +61,7 @@ _MAP_FRAMEWORK_is_integer_column = {
 
 def is_convertable_to_int_column(series: Series) -> bool:
     framework = get_framework_from_series(series)
-    func = _MAP_FRAMEWORK_is_numeric_column[framework]
+    func = _MAP_FRAMEWORK_is_convertable_to_int_column[framework]
     return func(series)
 
 

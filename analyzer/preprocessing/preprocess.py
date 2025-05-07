@@ -1,5 +1,7 @@
 from typing import List, Union, Dict, TypeVar
 
+from tqdm import tqdm
+
 from analyzer.utils.domain.const import MISSING
 from analyzer.utils.domain.validate import validate_binary_target
 from analyzer.utils.framework_depends import (
@@ -29,7 +31,8 @@ def preprocess_df(
         validate_target: bool = True,
         drop_not_processed: bool = False,
         _copy: bool = True,
-        _bin_by_target: bool = True
+        _bin_by_target: bool = True,
+        _tqdm: bool = True
 ) -> DataFrame:
     if not process_vars:
         if not ignore_vars:
@@ -77,7 +80,14 @@ def preprocess_df(
     else:
         target_series = None
 
-    for var_name in binning:
+    if _tqdm:
+        bar_format = (f"{{l_bar}}{{bar}}| Бинаризация переменных, {{n_fmt}}/{len(binning)} "
+                      f"[{{elapsed}}<{{remaining}}, {{rate_fmt}}]")
+        iter_obj = tqdm(binning, total=len(binning), bar_format=bar_format)
+    else:
+        iter_obj = binning
+
+    for var_name in iter_obj:
         variable_series = get_series_from_df(df, var_name)
         if binning[var_name] is True:
             ser = binarize_series(

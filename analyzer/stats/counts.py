@@ -24,7 +24,7 @@ def calc_var_groups_stat(
 
         df = preprocess_df(
             df, [var_name], binning=binning,
-            map_values=map_values, drop_not_processed=True
+            map_values=map_values, drop_not_processed=True, _tqdm=False
         )
 
     framework = get_framework_from_dataframe(df)

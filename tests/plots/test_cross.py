@@ -14,12 +14,12 @@ def test_cross_PD():
     )
 
     # _ = plot_cross_vars(
-    #     df, var_name_1='Age', var_name_2='Pclass', target_name='Survived', min_population=1.2,
+    #     report, var_name_1='Age', var_name_2='Pclass', target_name='Survived', min_population=1.2,
     #     binning={'Age': BinningParams(min_prc=10)}, histogram=False, annotation=True,
     #     plot_config=plot_config, colorbar=False
     # )
     # _ = plot_cross_vars(
-    #     df, var_name_1='Age', var_name_2='Pclass', min_population=1.2,
+    #     report, var_name_1='Age', var_name_2='Pclass', min_population=1.2,
     #     binning={'Age': BinningParams(min_prc=10)}, histogram=True, annotation=True,
     #     plot_config=None, colorbar=True
     # )

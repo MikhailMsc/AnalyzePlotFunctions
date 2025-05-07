@@ -88,7 +88,7 @@ def _map_elements_df_polars(
             except:
                 print('kek')
     # БАГ - вариант ниже не работает.
-    # df = df.with_columns(*[
+    # report = report.with_columns(*[
     #     pl.col(col_name).map_elements(lambda x: map_dict[col_name].get(x, x)).alias(col_name)
     #     for col_name in map_dict
     # ])

@@ -4,3 +4,5 @@ venv/
 titanic/
 legacy/
 Notebooks/
+*.csv
+*/.ipynb_checkpoints
