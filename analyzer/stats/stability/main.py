@@ -99,7 +99,7 @@ def calc_stability_report(
 
     df = preprocess_df(
         df, analyze_vars, None, target_name, binning,
-        map_values, True, False
+        map_values, _validate_target=True, drop_not_processed=False
     )
     df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars)
     df = optimize_df_int_types(df, min_max_values)

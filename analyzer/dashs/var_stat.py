@@ -281,7 +281,7 @@ def _plot_func(df, var1, var2, target, min_prc, circles):
         # Cross Plot
         df = preprocess_df(
             df, [var1, var2], None, target, BinningParams(min_prc=min_prc),
-            None, False, False, _tqdm=False
+            None, _validate_target=False, drop_not_processed=False, _tqdm=False
         )
 
         cnt_groups = get_nunique(df, [var1, var2])

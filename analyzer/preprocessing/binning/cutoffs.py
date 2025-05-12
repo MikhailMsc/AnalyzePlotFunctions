@@ -14,13 +14,25 @@ from analyzer.utils.framework_depends import (
 from analyzer.utils.general.types import Series, DataFrame
 from analyzer.utils.general.utils import get_accuracy, pretty_round
 
-from .params import BinningParams, default_bin_params
+from .params import BinningParams, DEFAULT_BIN_PARAMS
 
 
 def get_all_vars_cutoffs(
         df: DataFrame, columns: List[str] = None, target_name: str = None,
-        bin_params: BinningParams = default_bin_params
+        bin_params: BinningParams = DEFAULT_BIN_PARAMS
 ) -> Dict[str, list]:
+    """
+    Функция для получения точек бинаризации по множеству переменных (колонок).
+    Args:
+        df:                 датафрейм, для колонок которого хотим получить точки бинаризации
+        columns:            список колонок для бинаризации, если не задать, то будет анализировать все, кроме таргета
+        target_name:        название колонки с таргетом, опционально
+        bin_params:         параметры для бининга
+    Returns:
+        Словарь:
+            Ключ = название переменной
+            Значение = список точек бинаризации
+    """
     if target_name is not None:
         validate_binary_target(get_series_from_df(df, target_name))
 
@@ -34,22 +46,37 @@ def get_all_vars_cutoffs(
         target = None
 
     vars_cutoffs = {
-        col: get_var_cutoffs(
-            get_series_from_df(df, col), target, bin_params, False, col
-        )
-        for col in columns
+        col: bins for col in columns
+        if (bins := get_var_cutoffs(
+            get_series_from_df(df, col), target, bin_params,
+            False, col, False)
+            )
     }
     return vars_cutoffs
 
 
 def get_var_cutoffs(
-        variable: Series, target: Series = None, bin_params: BinningParams = default_bin_params,
-        validate_target: bool = True, _var_name: str = ''
+        variable: Series, target: Series = None, bin_params: BinningParams = DEFAULT_BIN_PARAMS,
+        _validate_target: bool = True, _var_name: str = '',
+        _raise_not_numeric: bool = True
 ) -> list:
     """
-    Расчет точек бинаризации переменной.
+    Расчет точек бинаризации числовой переменной.
+    Args:
+        variable:           переменная для бинаризации
+        target:             таргет для бинаризации, опционален
+        bin_params:         параметры для бининга
+        _validate_target:   проверка таргета на бинарность.
+        _var_name:          название переменной, вспомогательный параметр,
+            помогает отслеживать выполнение функции на конкретной переменной (будет принтиться ее нейминг в логе)
+        _raise_not_numeric: поднимать исключение если переменная не числовая, скрытый параметр
+
+    Returns:
+        list:               числа (точки бинаризации) + спец значения (MIN, MAX)
     """
-    validate_column_for_binning(variable, _var_name)
+    is_valid = validate_column_for_binning(variable, _var_name, _raise_not_numeric)
+    if not is_valid:
+        return []
 
     min_prc = max(bin_params.min_prc, 0.001)
     cnt_missing = get_count_missing(variable)
@@ -72,7 +99,7 @@ def get_var_cutoffs(
     if target is None:
         cutoffs = _get_var_cutoffs_no_target(stats, min_prc)
     else:
-        cutoffs = _get_var_cutoffs_with_target(variable, target, min_prc, validate_target)
+        cutoffs = _get_var_cutoffs_with_target(variable, target, min_prc, _validate_target)
 
     if bin_params.rnd is not None:
         cutoffs = sorted(set([pretty_round(val, bin_params.rnd) for val in cutoffs]))

@@ -262,7 +262,7 @@ class ConcentrationDash:
         sub_df = preprocess_df(
             sub_df, select_cols, None, self._target.value,
             BinningParams(min_prc=self._min_bucket.value),
-            None, False, False,
+            None, _validate_target=False, drop_not_processed=False,
             _bin_by_target=True, _copy=False
         )
         total_cnt = sub_df.shape[0]

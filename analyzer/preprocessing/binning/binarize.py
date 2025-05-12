@@ -1,20 +1,32 @@
 from analyzer.utils.domain.const import MIN, MAX, MISSING, NOT_MISSING
 from analyzer.utils.domain.validate import validate_column_for_binning
 from analyzer.utils.general.types import Series, FrameWork, get_framework_from_series
-
 from analyzer.utils.general.utils import pretty_number
+from analyzer.utils.framework_depends.columns import is_convertable_to_int_column
 
 from .cutoffs import get_var_cutoffs
-from .params import BinningParams, default_bin_params
-from ...utils.framework_depends.columns import is_convertable_to_int_column
+from .params import BinningParams, DEFAULT_BIN_PARAMS
 
 
 def binarize_series(
-        variable: Series, target: Series = None, bin_params: BinningParams = default_bin_params,
-        validate_target: bool = True, _var_name: str = ''
+        variable: Series, target: Series = None, bin_params: BinningParams = DEFAULT_BIN_PARAMS,
+        _validate_target: bool = True, _var_name: str = ''
 ) -> Series:
+    """
+    Функция бинаризации Series.
+
+    Args:
+        variable: Series, который хотим бинаризовать
+        target: Series-таргет, на основе которого будет происходить бининг, опциональный параметр
+        bin_params: параметры для бининига (точки бинаризации, минимальный размер бина)
+        _validate_target: проверка таргета на бинарность.
+        _var_name: название переменной, вспомогательный параметр
+
+    Returns:
+        Бинаризованный Series
+    """
     if bin_params.cutoffs is None:
-        cutoffs = get_var_cutoffs(variable, target, bin_params, validate_target)
+        cutoffs = get_var_cutoffs(variable, target, bin_params, _validate_target)
         if len(cutoffs) > 2 and is_convertable_to_int_column(variable):
             import numpy as np
             cutoffs = [MIN, ] + [int(np.floor(v)) for v in cutoffs[1:-1]] + [MAX,]

@@ -34,7 +34,7 @@ def calc_iv_report(
 
     df = preprocess_df(
         df, analyze_vars, ignore_vars, target_name, binning,
-        map_values, True, True
+        map_values, _validate_target=True, drop_not_processed=True
     )
     analyze_vars = [col for col in get_columns(df) if col != target_name]
     if _tqdm:
@@ -84,7 +84,8 @@ def calc_iv_var(
 
         df = preprocess_df(
             df, [var_name], target_name=target_name, binning=binning,
-            map_values=map_values, validate_target=validate_target, drop_not_processed=True, _tqdm=False
+            map_values=map_values, _validate_target=validate_target, drop_not_processed=True,
+            _tqdm=False
         )
 
     framework = get_framework_from_dataframe(df)

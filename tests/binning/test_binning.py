@@ -1,4 +1,4 @@
-from preprocessing.binning import binarize_series
+from analyzer.preprocessing import binarize_series
 
 
 def test_binning_PD():

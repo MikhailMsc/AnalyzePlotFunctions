@@ -88,7 +88,7 @@ def calc_concentration_report(
 
     df = preprocess_df(
         df, analyze_vars, None, target_name, binning,
-        map_values, _validate_target, False,
+        map_values, _validate_target, drop_not_processed=False,
         _bin_by_target=_bin_by_target, _copy=False
     )
     df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars)

@@ -14,13 +14,17 @@ def validate_binary_target(series: Series, var_name: str = '') -> None:
         raise Exception(error_msg)
 
 
-def validate_column_for_binning(series: Series, var_name: str = '') -> None:
+def validate_column_for_binning(series: Series, var_name: str = '', raise_exception: bool = True) -> bool:
     if not is_numeric_column(series):
-        error_msg = (
-                (f'{var_name}: ' if var_name else '') +
-                'Вы хотите применить алгоритм категоризации к нечисловой переменной.'
-        )
-        raise Exception(error_msg)
+        if raise_exception:
+            error_msg = (
+                    (f'Variable = {var_name}: ' if var_name else '') +
+                    'Вы хотите применить алгоритм категоризации к нечисловой переменной.'
+            )
+            raise Exception(error_msg)
+        else:
+            return False
+    return True
 
 
 def get_binary_columns(df: DataFrame) -> List[str]:

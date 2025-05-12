@@ -1,4 +1,4 @@
-from preprocessing.binning import get_var_cutoffs
+from analyzer.preprocessing import get_var_cutoffs
 
 
 def test_get_var_cuttofs_PD_no_target():
