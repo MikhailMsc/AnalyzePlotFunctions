@@ -3,6 +3,7 @@ from typing import List, Union, Tuple
 import pandas as pd
 from tqdm import tqdm
 
+from analyzer import logger
 from analyzer.preprocessing import BinningParamsMultiVars, MapDictMultiVars, preprocess_df, MapDictSingleVar
 from analyzer.utils.domain.columns import (
     C_GROUP, C_TARGET, C_POPULATION, C_TARGET_RATE, C_WOE,
@@ -24,14 +25,62 @@ SH_InformationValueReport = SchemaDF(
 
 SH_ShortInformationValueReport = SchemaDF(columns=[C_VARNAME, C_TOTAL_IV], key=[C_VARNAME])
 
+info_msg = f"""
+    Var_Name - имя переменной,
+    {C_GROUP_NUMBER.n} - номер категории,
+    {C_GROUP.n} - значение категории,
+    {C_COUNT.n} - общий размер категории,
+    {C_TARGET.n} - количество таргетов в данной категории,
+    {C_POPULATION.n} - относительный размер категории,
+    {C_TARGET_POPULATION.n} - относительный размер таргета в данной категории,
+    {C_TARGET_RATE.n} - Target Rate в данной категории,
+    {C_GROUP_IV.n} - information value данной категории,
+    {C_TOTAL_IV.n} - information value всей переменной
+    
+    Information Value (IV):
+    - Чем больше значение ПО МОДУЛЮ = тем больше отклонение target rate oт среднего по выборке (сильнее разделяющая способность)
+    - IV > 0 = target rate выше среднего по выборке
+    - IV < 0 = target rate ниже среднего по выборке
+"""
+
 
 def calc_iv_report(
         df: DataFrame, target_name: str, analyze_vars: List[str] = None, ignore_vars: List[str] = None,
-        binning: BinningParamsMultiVars = True,
-        map_values: MapDictMultiVars = None, sort_by_iv: bool = True,
-        _tqdm: bool = True
+        map_values: MapDictMultiVars = None, binning: BinningParamsMultiVars = True,
+        sort_by_iv: bool = True, _tqdm: bool = True, _logging: bool = True
 ) -> Tuple[SH_ShortInformationValueReport.t, SH_InformationValueReport.t]:
+    """
+    Формирует отчет Information Value для заданных переменных.
 
+    Args:
+        df:             Исследуемый датафрейм
+        target_name:    Название таргета
+        analyze_vars:   Список переменных для анализа, по умолчанию возьмутся все, кроме таргета и ignore_vars
+        ignore_vars:    Список переменных игнорируемых во время анализа
+        map_values:     Словарь для замены значений переменных (словарь, ключ = название переменной,
+                        значение = словарь старое-новое значение)
+        binning:        Параметры для биннинга, ниже будет более подробное описание.
+        sort_by_iv:     Отсортировать по IV или по алфавиту.
+        _tqdm:          Отображать прогрессбар
+        _logging:       Вывод сообщения лога.
+
+    Returns:
+        DataFrame_1:
+            - VARNAME
+            - TOTAL_IV
+
+        DataFrame_2:
+            - VARNAME,
+            - GROUP_NUMBER,
+            - GROUP,
+            - COUNT,
+            - TARGET,
+            - POPULATION,
+            - TARGET_POPULATION,
+            - TARGET_RATE,
+            - GROUP_IV,
+            - TOTAL_IV
+    """
     df = preprocess_df(
         df, analyze_vars, ignore_vars, target_name, binning,
         map_values, _validate_target=True, drop_not_processed=True
@@ -49,7 +98,7 @@ def calc_iv_report(
         single_report = calc_iv_var(
             df=df, var_name=var_name, target_name=target_name,
             binning=False,
-            validate_target=False,
+            _validate_target=False,
         )
         total_report.append(single_report)
 
@@ -67,24 +116,46 @@ def calc_iv_report(
         reset_index(drop=True)
     )
 
+    if _logging:
+        logger.log_info(info_msg)
     return total_report_short, total_report
 
 
 def calc_iv_var(
-        df: DataFrame, var_name: str, target_name: str,
-        binning: Union[BinningParams, bool] = True, map_values: MapDictSingleVar = None,
-        validate_target: bool = True
+        df: DataFrame, var_name: str, target_name: str, map_values: MapDictSingleVar = None,
+        binning: Union[BinningParams, bool] = True, _validate_target: bool = True
 ) -> SH_InformationValueReport.t:
     """
-    TODO: Дать подробное описание
+    Расчет Information Value для одной переменной.
+
+    Args:
+        df:                 Исследуемый датафрейм
+        var_name:           Название переменной
+        target_name         Название таргета
+        map_values:         Мэппинг значений переменной
+        binning:            Параметры для биннинга или булев флаг (нужен или нет биннинг)
+        _validate_target:   Скрытый параметр, валидация бинарности таргета
+
+    Returns:
+        DataFrame:
+            - VARNAME,
+            - GROUP_NUMBER,
+            - GROUP,
+            - COUNT,
+            - TARGET,
+            - POPULATION,
+            - TARGET_POPULATION,
+            - TARGET_RATE,
+            - GROUP_IV,
+            - TOTAL_IV
     """
-    if validate_target or binning or map_values:
+    if _validate_target or binning or map_values:
         if map_values is not None:
             map_values = {var_name: map_values}
 
         df = preprocess_df(
             df, [var_name], target_name=target_name, binning=binning,
-            map_values=map_values, _validate_target=validate_target, drop_not_processed=True,
+            map_values=map_values, _validate_target=_validate_target, drop_not_processed=True,
             _tqdm=False
         )
 

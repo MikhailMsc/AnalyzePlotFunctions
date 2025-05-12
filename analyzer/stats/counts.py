@@ -15,9 +15,25 @@ SH_GroupsStatReport = SchemaDF(
 
 
 def calc_var_groups_stat(
-        df: DataFrame, var_name: str, binning: Union[BinningParams, bool] = True,
-        map_values: MapDictSingleVar = None
+        df: DataFrame, var_name: str, map_values: MapDictSingleVar = None,
+        binning: Union[BinningParams, bool] = True
 ) -> SH_GroupsStatReport.t:
+    """
+    Общая статистика по размеру популяций групп одной переменной.
+
+    Args:
+        df:         Датафрейм, содержащий интересующую переменную.
+        var_name:   Название интересующей переменной.
+        map_values: Словарь для мэппинга значений переменной.
+        binning:    Параметры для биннинга.
+
+    Returns:
+        DataFrame:
+            - GROUP_NUMBER
+            - GROUP
+            - TOTAL
+            - POPULATION
+    """
     if binning or map_values:
         if map_values is not None:
             map_values = {var_name: map_values}

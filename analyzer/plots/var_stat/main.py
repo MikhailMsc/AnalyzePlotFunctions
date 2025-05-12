@@ -24,7 +24,7 @@ def plot_var_stat(
     if has_target:
         report: SH_InformationValueReport.t = calc_iv_var(data, var_name, target_name, binning, map_values)
     else:
-        report: SH_GroupsStatReport.t = calc_var_groups_stat(data, var_name, binning, map_values)
+        report: SH_GroupsStatReport.t = calc_var_groups_stat(data, var_name, map_values, binning)
 
     plot_config, palette = prepare_plot_config(report, plot_config)
 

@@ -239,8 +239,8 @@ class VarStatDash:
             stop_cols = [col for col in self._x1.options if '❌' in col]
 
             total_iv_stats, _ = calc_iv_report(
-                self._origin_df, self._target.value, analyze_vars, None,
-                BinningParams(min_prc=self._min_prc.value)
+                self._origin_df, self._target.value, analyze_vars, ignore_vars=None,
+                binning=BinningParams(min_prc=self._min_prc.value), _logging=False
             )
             vars_names = (
                     total_iv_stats[C_TOTAL_IV.n].map(lambda x: f'({str(round(x, 1))}) ') +
