@@ -19,6 +19,7 @@ from analyzer.utils.general.types import DataFrame, FrameWork, get_framework_fro
 
 from ._pandas import calc_stability as _calc_stability_pandas, make_reverse_mapping_pandas, filter_small_segments_pandas
 from ._polars import calc_stability as _calc_stability_polars, make_reverse_mapping_polars, filter_small_segments_polars
+from ... import logger
 
 SH_StabilityReportNoTarget = SchemaDF(
     columns=[
@@ -71,13 +72,54 @@ def calc_stability_report(
         df: DataFrame, split_var_name: str, combo_min: int = 1, combo_max: int = 1,
         analyze_vars: List[str] = None, ignore_vars: List[str] = None,
         split_var_value: Any = None, target_name: str = None,
-        binning: BinningParamsMultiVars = True,
         map_values: MapDictMultiVars = None,
+        binning: BinningParamsMultiVars = True,
         min_part_or_cnt: Union[float, int] = None,
         min_abs_popstab: float = None,
         min_abs_tgstab: float = None
-
 ) -> DataFrame:
+    """
+    Отчет по стабильности переменных
+
+    Args:
+        df:                         Исследуемый датафрейм
+        split_var_name:             Переменная которая будет разбивать выборку на подвыборки
+        combo_min:                  Минимальное количество переменных, участвующих в комбинировании
+        combo_max:                  Максимальное количество переменных, участвующих в комбинировании
+        analyze_vars:               Список анализируемых переменных, опционально
+        ignore_vars:                Список игнорируемых переменных, опционально
+        split_var_value:            Опционально, если задано, то стабильность будет измеряться
+                                    относительно подвыборки под этим значением, иначе относительно всей выборки
+        target_name:                Опционально, название таргета
+        map_values:                 Словарь для мэппинга значений переменных
+        binning:                    Параметры для биннинга
+        min_part_or_cnt:            Фильтр на минимальный размер популяции в процентах или количестве
+        min_abs_popstab:            Фильтр на минимальное значение абсолютного показателя стабильности размера популяции
+        min_abs_tgstab:             Фильтр на минимальное значение абсолютного показателя стабильности Target Rate
+
+    Returns:
+        DataFrame:
+            SPLIT_COLUMN:                   поле, которое разбивает данные на подвыборки для сверки их характеристик между собой,
+            Var[i]_Name:                    имя i-ой переменной участвующей в сегменте,
+            Var[i]_Value:                   значение i-ой переменной участвующей в сегменте,
+            COUNT_MAIN:                     количество наблюдений в данном сегменте базовой выборки (относительно которой будем сверять),
+            COUNT_SECONDARY:                количество наблюдений в данном сегменте в сверяемой выборке (определяется по SPLIT_COLUMN),
+            POPULATION_MAIN:                относительный размер сегмента в базовой выборке,
+            POPULATION_SECONDARY:           относительный размер сегмента в сверяемой выборке,
+            TARGET_MAIN:                    количество таргетов в данном сегменте базовой выборки,
+            TARGET_SECONDARY:               количество таргетов в данном сегменте в сверяемой выборке
+            TARGET_RATE_MAIN:               Target Rate в данному сегменте базовой выборки,
+            TARGET_RATE_SECONDARY:          Target Rate в данному сегменте в сверяемой выборке
+            TARGET_POPULATION_MAIN:         относительный размер таргета в данном сегменте базовой выборки,
+            TARGET_POPULATION_SECONDARY:    относительный размер таргета в данном сегменте в сверяемой выборке,
+            POPULATION_STABILITY:           индекс стабильности размера сегмента (базовая vs сверяемая),
+            TARGET_STABILITY:               индекс стабильности таргета сегмента (базовая vs сверяемая)
+
+    Примечание. Показатели стабильности:
+        - Чем больше значение ПО МОДУЛЮ = тем больше отклонение от базового значения
+        - Стабильность > 0 = целевой показатель увеличился, относительно базового значения.
+        - Стабильность < 0 = целевой показатель уменьшился, относительно базового значения.
+    """
 
     if not analyze_vars:
         analyze_vars = set(get_columns(df))
@@ -98,10 +140,11 @@ def calc_stability_report(
         df = convert_df_to_polars(df)
 
     df = preprocess_df(
-        df, analyze_vars, None, target_name, binning,
-        map_values, _validate_target=True, drop_not_processed=False
+        df, analyze_vars, None, target_name, map_values, binning,
+        drop_not_processed=False, _validate_target=True
     )
-    df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars)
+    df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars, bad_vars_behavior='drop')
+    analyze_vars = [col for col in analyze_vars if col in get_columns(df)]
     df = optimize_df_int_types(df, min_max_values)
 
     full_report = []
@@ -130,7 +173,8 @@ def calc_stability_report(
     schema_out.replace_columns({C_SPLIT_COLUMN.n: Column(split_var_name)})
     full_report = schema_out(full_report, reorder_colums=True)
     full_report = convert_df_to_pandas(full_report)
-    print(info_msg)
+
+    logger.log_info(info_msg)
     return full_report
 
 

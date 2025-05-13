@@ -55,17 +55,61 @@ SH_ConcentrationReport = SchemaDF(
 def calc_concentration_report(
         df: DataFrame, target_name: str, combo_min: int = 1, combo_max: int = 1,
         analyze_vars: List[str] = None, ignore_vars: List[str] = None,
-        binning: BinningParamsMultiVars = True,
         map_values: MapDictMultiVars = None,
+        binning: BinningParamsMultiVars = True,
         pop_more: float = None,
         tr_less: float = None,
         tr_more: float = None,
+        sort_by_iv: bool = False,
         _tqdm: bool = True,
         _validate_target: bool = True,
         _bin_by_target: bool = True,
         _logging: bool = True,
         _drop_single_vals: bool = True
 ) -> DataFrame:
+    """
+    Отчет по концентрации таргета. Поиск аномальных сегментов.
+
+    Args:
+        df:                     Исследуемый датафрейм
+        target_name:            Название таргета
+        combo_min:              Минимальное количество переменных, участвующих в комбинировании
+        combo_max:              Максимальное количество переменных, участвующих в комбинировании
+        analyze_vars:           Список анализируемых переменных, опционально
+        ignore_vars:            Список игнорируемых переменных, опционально
+        map_values:             Словарь для замены значений переменных (словарь, ключ = название переменной,
+                                значение = словарь старое-новое значение)
+        binning:                Параметры для биннинга
+        pop_more:               Удалить сегменты, менее заданного процента популяции
+        tr_less:                Оставить сегменты, TargetRate которых менее заданного процента
+        tr_more:                Оставить сегменты, TargetRate которых выше заданного процента
+        sort_by_iv:             Отсортировать по IV
+        _tqdm:                  Отображать прогрессбар
+        _validate_target:       Валидация таргета
+        _bin_by_target:         Бинаризация с использованием таргета
+        _logging:               Логгировать сообщения
+        _drop_single_vals:      Удалить из анализа переменные имеющие одно значение/категорию
+
+    Returns:
+        DataFrame:
+            Var[i]_Name:                имя i-ой переменной участвующей в сегменте,
+            Var[i]_Value:               значение i-ой переменной участвующей в сегменте,
+            COUNT:                      количество наблюдений в данном сегменте,
+            POPULATION:                 относительный размер сегмента,
+            TARGET:                     количество таргетов в данном сегменте,
+            TARGET_RATE:                Target Rate в данном сегменте,
+            TARGET_POPULATION:          относительный размер таргета в данном сегменте,
+            GROUP_IV:                   information value данного сегмента,
+            PARENT_MIN:                 родительский сегмент с минимальным target_rate,
+            PARENT_MIN_TargetRate:      минимальный target_rate родительского сегмента,
+            PARENT_MAX:                 родительский сегмент с максимальным target_rate,
+            PARENT_MAX_TargetRate:      максимальный target_rate родительского сегмента
+
+    Примечание. Information Value (IV):
+        - Чем больше значение ПО МОДУЛЮ = тем больше отклонение target rate oт среднего по выборке (сильнее разделяющая способность)
+        - IV > 0 = target rate выше среднего по выборке
+        - IV < 0 = target rate ниже среднего по выборке
+    """
 
     if not analyze_vars:
         analyze_vars = set(get_columns(df))
@@ -87,11 +131,12 @@ def calc_concentration_report(
         framework = FrameWork.polars
 
     df = preprocess_df(
-        df, analyze_vars, None, target_name, binning,
-        map_values, _validate_target, drop_not_processed=False,
-        _bin_by_target=_bin_by_target, _copy=False
+        df, analyze_vars, ignore_vars=None, target_name=target_name,
+        map_values=map_values, binning=binning, drop_not_processed=False,
+        _validate_target=_validate_target, _bin_by_target=_bin_by_target, _copy=False
     )
-    df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars)
+    df, reverse_map_vars, min_max_values = encode_df(df, analyze_vars, bad_vars_behavior='drop')
+    analyze_vars = [col for col in analyze_vars if col in get_columns(df)]
     df = optimize_df_int_types(df, min_max_values)
 
     if _drop_single_vals:
@@ -175,6 +220,9 @@ def calc_concentration_report(
     }, pos=0)
     full_report = schema_out(full_report, reorder_colums=True)
     full_report = convert_df_to_pandas(full_report)
+    if sort_by_iv:
+        full_report = full_report.sort_values(C_GROUP_IV.n, ascending=False)
+        full_report.reset_index(drop=True, inplace=True)
 
     if _logging:
         logger.log_info(info_msg)

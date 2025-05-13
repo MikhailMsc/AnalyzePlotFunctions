@@ -66,24 +66,29 @@ def calc_iv_report(
 
     Returns:
         DataFrame_1:
-            - VARNAME
-            - TOTAL_IV
+            VARNAME:                имя переменной
+            TOTAL_IV:               information value всей переменной
 
         DataFrame_2:
-            - VARNAME,
-            - GROUP_NUMBER,
-            - GROUP,
-            - COUNT,
-            - TARGET,
-            - POPULATION,
-            - TARGET_POPULATION,
-            - TARGET_RATE,
-            - GROUP_IV,
-            - TOTAL_IV
+            VARNAME:                имя переменной
+            GROUP_NUMBER:           номер категории
+            GROUP:                  значение категории
+            COUNT:                  общий размер категории
+            TARGET:                 количество таргетов в данной категории
+            POPULATION:             относительный размер категории
+            TARGET_POPULATION:      относительный размер таргета в данной категории
+            TARGET_RATE:            Target Rate в данной категории
+            GROUP_IV:               information value данной категории
+            TOTAL_IV:               information value всей переменной
+
+    Примечание. Information Value (IV):
+        - Чем больше значение ПО МОДУЛЮ = тем больше отклонение target rate oт среднего по выборке (сильнее разделяющая способность)
+        - IV > 0 = target rate выше среднего по выборке
+        - IV < 0 = target rate ниже среднего по выборке
     """
     df = preprocess_df(
-        df, analyze_vars, ignore_vars, target_name, binning,
-        map_values, _validate_target=True, drop_not_processed=True
+        df, analyze_vars, ignore_vars, target_name, map_values, binning,
+        drop_not_processed=True, _validate_target=True
     )
     analyze_vars = [col for col in get_columns(df) if col != target_name]
     if _tqdm:
@@ -138,25 +143,29 @@ def calc_iv_var(
 
     Returns:
         DataFrame:
-            - VARNAME,
-            - GROUP_NUMBER,
-            - GROUP,
-            - COUNT,
-            - TARGET,
-            - POPULATION,
-            - TARGET_POPULATION,
-            - TARGET_RATE,
-            - GROUP_IV,
-            - TOTAL_IV
+            VARNAME:                имя переменной
+            GROUP_NUMBER:           номер категории
+            GROUP:                  значение категории
+            COUNT:                  общий размер категории
+            TARGET:                 количество таргетов в данной категории
+            POPULATION:             относительный размер категории
+            TARGET_POPULATION:      относительный размер таргета в данной категории
+            TARGET_RATE:            Target Rate в данной категории
+            GROUP_IV:               information value данной категории
+            TOTAL_IV:               information value всей переменной
+
+    Примечание. Information Value (IV):
+        - Чем больше значение ПО МОДУЛЮ = тем больше отклонение target rate oт среднего по выборке (сильнее разделяющая способность)
+        - IV > 0 = target rate выше среднего по выборке
+        - IV < 0 = target rate ниже среднего по выборке
     """
     if _validate_target or binning or map_values:
         if map_values is not None:
             map_values = {var_name: map_values}
 
         df = preprocess_df(
-            df, [var_name], target_name=target_name, binning=binning,
-            map_values=map_values, _validate_target=_validate_target, drop_not_processed=True,
-            _tqdm=False
+            df, [var_name], target_name=target_name, map_values=map_values, binning=binning,
+            drop_not_processed=True, _validate_target=_validate_target, _tqdm=False
         )
 
     framework = get_framework_from_dataframe(df)

@@ -26,8 +26,8 @@ BinningParamsMultiVars = Union[Dict[str, Union[BinningParams, bool]], bool, Binn
 def preprocess_df(
         df: DataFrame, process_vars: List[str] = None, ignore_vars: List[str] = None,
         target_name: str = None,
-        binning: BinningParamsMultiVars = True,
         map_values: MapDictMultiVars = None,
+        binning: BinningParamsMultiVars = True,
         drop_not_processed: bool = False,
         _validate_target: bool = True,
         _copy: bool = True,

@@ -4,7 +4,7 @@ from analyzer.preprocessing import BinningParams
 
 def test_concentration_report_PD():
     import pandas as pd
-    df = pd.read_csv('../titanic.csv', sep=',')
+    df = pd.read_csv('../Titanic-Dataset.csv', sep=',')
 
     bin_params = BinningParams(
         min_prc=10

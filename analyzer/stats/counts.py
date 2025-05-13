@@ -29,18 +29,18 @@ def calc_var_groups_stat(
 
     Returns:
         DataFrame:
-            - GROUP_NUMBER
-            - GROUP
-            - TOTAL
-            - POPULATION
+            GROUP_NUMBER:   Номер группы
+            GROUP:          Название группы
+            TOTAL:          Размер группы, кол-во наблюдений
+            POPULATION:     Размер группы, процент выборки
     """
     if binning or map_values:
         if map_values is not None:
             map_values = {var_name: map_values}
 
         df = preprocess_df(
-            df, [var_name], binning=binning,
-            map_values=map_values, drop_not_processed=True, _tqdm=False
+            df, [var_name], map_values=map_values, binning=binning,
+            drop_not_processed=True, _tqdm=False
         )
 
     framework = get_framework_from_dataframe(df)
