@@ -115,7 +115,7 @@ def preprocess_df(
     else:
         target_series = None
 
-    if _tqdm:
+    if _tqdm and len(binning) != 0:
         bar_format = (f"{{l_bar}}{{bar}}| Бинаризация переменных, {{n_fmt}}/{len(binning)} "
                       f"[{{elapsed}}<{{remaining}}, {{rate_fmt}}]")
         iter_obj = tqdm(binning, total=len(binning), bar_format=bar_format)

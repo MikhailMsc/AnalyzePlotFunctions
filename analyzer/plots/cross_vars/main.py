@@ -28,10 +28,40 @@ def plot_cross_vars(
         _resize: bool = True
 ) -> Union[SH_ConcentrationReport.t]:
     """
-    План решения:
-    1. В зависимости есть ли target или нет, получить таблицу с необходимой статистикой.
-    2. Нарисовать график
-    3. Отобразить табличку
+    График отображения кросс-статистки по двум переменным.
+
+    Args:
+        data:                       Исследуемый датафрейм
+        var_name_1:                 Название первой интересующей переменной
+        var_name_2:                 Название второй интересующей переменной
+        target_name:                Опционально. Название таргета
+        map_values:                 Словарь для замены значений переменных (словарь, ключ = название переменной,
+                                    значение = словарь старое-новое значение)
+        binning:                    Параметры для биннинга
+        histogram:                  Флаг, боковые диаграммы
+        colorbar:                   Флаг, колорбар
+        annotation:                 Флаг, аннотация графика
+        plot_config:                Конфиг для графика
+        min_population:             Минимальный размер популяции(%) для отображения на графике
+        circles:                    Круговая диаграмма или прямоугольная
+        _resize:                    Скрытый параметр. Подгон размера графика
+
+    Returns:
+        * - Опциональные колонки, только при наличии таргета.
+        DataFrame:
+            Var1_Name:                   Значения групп первой переменной
+            Var2_Name:                   Значения групп второй переменной
+            COUNT:                       Количество наблюдений в данном сегменте,
+            POPULATION:                  Относительный размер сегмента,
+            *TARGET:                     Количество таргетов в данном сегменте,
+            *TARGET_RATE:                Target Rate в данном сегменте,
+            *TARGET_POPULATION:          относительный размер таргета в данном сегменте,
+            *GROUP_IV:                   information value данного сегмента,
+            *PARENT_MIN:                 родительский сегмент с минимальным target_rate,
+            *PARENT_MIN_TargetRate:      минимальный target_rate родительского сегмента,
+            *PARENT_MAX:                 родительский сегмент с максимальным target_rate,
+            *PARENT_MAX_TargetRate:      максимальный target_rate родительского сегмента
+
     """
     has_target = target_name is not None
     if not has_target:
@@ -130,7 +160,7 @@ def plot_cross_vars(
         plot_circles(
             var_name_1, var_name_2, colorbar, histogram,
             plot_config, population_stats, target_stats,
-            hist_report, palette_main, palette_x_top, palette_y_right,
+            hist_report, palette_x_top, palette_y_right,
             order_vars_values, labels
         )
     else:

@@ -8,6 +8,60 @@ AVAILABLE_STYLES = plt.style.available[:]
 
 @dataclass
 class PlotConfig:
+    """
+    Args:
+        style: str                          Стиль графика. Список доступных значений можно узнать через:
+                                            from matplotlib import pyplot as plt
+                                            print(plt.style.available)
+        plot_size: Tuple[float, float]      Размер изображения (X, Y)
+
+        colormap: str                       Название цветовой палитры
+                                            https://www.practicalpythonfordatascience.com/ap_seaborn_palette
+        color: str                          Цвет 1
+        color2: str                         Цвет 2
+
+        annotation_delta: float             Смещение аннотации по вертикали
+        annotation_font_size: float         Размер шрифта аннотации
+
+        title: str                          Название графика
+        title_size: float                   Размер шрифта для названия графика
+        title_pad: float                    Отступт между графиком и названием
+
+        xlabel: str                         Название оси X
+        xlabel_size: float                  Размер названия оси Х
+        xtick_size: float                   Размер делений на оси Х
+        x_rotation: float                   Поворот подписей на оси Х
+        x_grid: bool                        Отображение сетки X на графике
+        xmax: float                         Максимальное значение Х
+        xmin: float                         Минимальное значение Х
+
+        ylabel: str                         Название оси Y
+        ylabel_size: float                  Размер названия оси Y
+        ytick_size: float                   Размер делений на оси Y
+        y_rotation: float                   Поворот подписей на оси Y
+        y_grid: bool                        Отображение сетки Y на графике
+        ymax: float                         Максимальное значение Y
+        ymin: float                         Минимальное значение Y
+
+        y2label: str                        Название оси Y2
+        y2_grid: bool                       Отображение сетки Y2 на графике
+        y2max: float                        Максимальное значение Y2
+        y2min: float                        Минимальное значение Y2
+
+        grid_widths: float                  Толщина линий сетки графика
+        bar_width: float                    Толщина столбцов на столбчатых диаграммах
+        side_grid: bool                     Отображение сетки на вспомогательных графиках
+
+        cbar_location: 'bottom', 'top', 'left', 'right
+                                            Место локации колорбар. Актуально не для всех графиков.
+        cbar_width: float                   Толщина колорбара
+        cbar_pad: float                     Размер отступа колорбара от графика
+
+        -- Нужно только для сложных композиций графиков.
+        columns_ratios: List[float]         Отношение между колонками сетки графика
+        rows_ratios: List[float]            Отношение между строками сетки графика
+        empty_space: List[float]            Размер промежутков между ячейками сетки графика
+    """
     style: Literal[*AVAILABLE_STYLES] = None
     plot_size: Tuple[float, float] = None
 
@@ -43,15 +97,10 @@ class PlotConfig:
     y2max: float = None
     y2min: float = None
 
-    x_to_top: bool = False
-    x_inverse: bool = False
-    y_to_right: bool = False
-    y_inverse: bool = False
-
     columns_ratios: List[float] = None
     rows_ratios: List[float] = None
     empty_space: float = None
-    grig_widths: float = None
+    grid_widths: float = None
     bar_width: float = 0.99
     side_grid: bool = None
 

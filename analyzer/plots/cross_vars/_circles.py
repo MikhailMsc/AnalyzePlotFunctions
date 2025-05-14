@@ -16,7 +16,7 @@ def plot_circles(
     var_name_1: str, var_name_2: str, colorbar: bool, histogram: bool,
     plot_config: Union[PlotConfig, None], population_stats: DataFrame,
     target_stats: Union[DataFrame, None], hist_report: Dict[str, DataFrame],
-    palette_main: List, palette_x_top: List, palette_y_right: List,
+    palette_x_top: List, palette_y_right: List,
     order_vars_values: Dict[str, List], labels: DataFrame
 ):
     plot_config = _prepare_plot_config(
@@ -24,7 +24,6 @@ def plot_circles(
         histogram, colorbar, plot_config,
     )
     has_target = target_stats is not None
-    value_column = C_TARGET_RATE.n if has_target else C_POPULATION.n
 
     with plt.style.context(plot_config.style):
         fig, ax_main, ax_hist_top, ax_hist_right, ax_colorbar = get_all_axes(

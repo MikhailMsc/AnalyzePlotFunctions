@@ -1,4 +1,5 @@
 from analyzer.utils.general.types import DataFrame, Series, get_framework_from_dataframe, FrameWork
+import warnings
 
 
 def set_column(df: DataFrame, series_or_value: Series, column: str):
@@ -8,7 +9,10 @@ def set_column(df: DataFrame, series_or_value: Series, column: str):
 
 
 def _set_column_pandas(df: DataFrame, series_or_value: Series, column: str) -> DataFrame:
-    df[column] = series_or_value
+    import pandas as pd
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=pd.errors.SettingWithCopyWarning)
+        df[column] = series_or_value
     return df
 
 

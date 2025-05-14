@@ -18,7 +18,6 @@ from analyzer.utils.framework_depends import get_columns, get_series_from_df, ge
 from analyzer.utils.framework_depends.columns import is_numeric_column
 from analyzer.utils.general.types import DataFrame
 
-
 NONE_VALUE = 'None'
 
 
@@ -50,16 +49,31 @@ OUTPUT_LAYOUT = widgets.Layout(
 
 
 class VarStatDash:
+    """
+    Дашборд для плоского анализа переменных.
+    Args:
+        df:                         Исследуемый датафрейм.
+        targets_names:                    Список таргетов, можно не задавать, в этом случае будут определены бинарные колонки
+                                    в датафрейме и подставлены как возможный таргет.
+        bad_cols_start:             Не будет отображать колонки, число категорий в которых превысит заданное значение.
+                                    Отметит их крестиком.
 
-    def __init__(self, df: DataFrame, targets: List[str] = None, bad_cols_start: int = 20):
+    Применение:
+    1. Подали любой датафрейм на вход, бинаризавоать колонки не нужно, это будет происходить под капотом.
+    2. Выбирая значения в виджетах X1/X2/Target вы сможете отобразить статистики в виде графика и таблицы.
+    3. Список переменных в виджетах X1 и X2 отсортированы по алфавиту. Но если нажать "Сортировать (IV)" то
+       они будут отсортированы. Вернуть сортироваку по алфавиту можно изменив размер минимального бакета.
+    """
+
+    def __init__(self, df: DataFrame, targets_names: List[str] = None, bad_cols_start: int = 20):
         self._origin_df = df
         self._all_columns = [NONE_VALUE, ] + sorted(get_columns(df))
         self._cache_iv_reports = dict()  # K = (target, prc_min), V = Dict[Varname, IV]
         self._sort_by_iv = False
         self._transaction_start = False
 
-        if targets:
-            self._all_columns = [col for col in self._all_columns if col not in targets]
+        if targets_names:
+            self._all_columns = [col for col in self._all_columns if col not in targets_names]
 
         not_numeric_columns = [
             col for col in self._all_columns[1:]
@@ -107,17 +121,17 @@ class VarStatDash:
         self._plot_output = widgets.Output(layout=OUTPUT_LAYOUT)
         self._table_output = widgets.Output(layout=OUTPUT_LAYOUT)
 
-        if targets:
-            for tg in targets:
+        if targets_names:
+            for tg in targets_names:
                 validate_binary_target(get_series_from_df(df, tg), tg)
-            targets = [NONE_VALUE, ] + targets
+            targets_names = [NONE_VALUE, ] + targets_names
 
         else:
-            targets = [NONE_VALUE, ] + get_binary_columns(df)
+            targets_names = [NONE_VALUE, ] + get_binary_columns(df)
 
         self._target = widgets.Dropdown(
-            options=targets,
-            value=targets[-1 if len(targets) == 2 else 0],
+            options=targets_names,
+            value=targets_names[-1 if len(targets_names) == 2 else 0],
             description='Target: ',
             disabled=False,
             layout=MAIN_LAYOUT

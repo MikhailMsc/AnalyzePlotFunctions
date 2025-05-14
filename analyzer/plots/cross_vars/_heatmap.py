@@ -30,7 +30,7 @@ def plot_heatmap(
         cross_plot = sns.heatmap(
             plot_stats,
             cmap=palette_main,
-            cbar=False, linewidths=plot_config.grig_widths,
+            cbar=False, linewidths=plot_config.grid_widths,
             annot=labels, annot_kws={'size': plot_config.annotation_font_size}, fmt='',
             ax=ax_main
         )

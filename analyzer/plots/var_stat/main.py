@@ -17,12 +17,39 @@ def plot_var_stat(
         data: DataFrame, var_name: str, target_name: str = None,
         map_values: MapDictSingleVar = None, binning: BinningParamsSingleVars = True,
         annotation: bool = True, plot_config: PlotConfig = None,
-        _mark_bar = None,
+        _mark_bar=None,
 ) -> Union[SH_InformationValueReport.t, SH_GroupsStatReport.t]:
+    """
+    График для отображения статистики по переменной.
+
+    Args:
+        data:               Исследуемый датафрейм
+        var_name:           Название интересующей переменной
+        target_name:        Опционально. Название таргета
+        map_values:         Словарь для замены значений переменных (словарь старое-новое значение)
+        binning:            Параметры для биннинга
+        annotation:         Аннотация на графике
+        plot_config:        Конфиг для графика
+        _mark_bar:          Скрытый параметр. Название категории, столбце которой необходимо выделить.
+
+    Returns:
+        * - Опциональные колонки, есть только при наличии таргета.
+        DataFrame:
+            VARNAME:                имя переменной
+            GROUP_NUMBER:           номер категории
+            GROUP:                  значение категории
+            COUNT:                  общий размер категории
+            *TARGET:                количество таргетов в данной категории
+            POPULATION:             относительный размер категории
+            *TARGET_POPULATION:     относительный размер таргета в данной категории
+            *TARGET_RATE:           Target Rate в данной категории
+            *GROUP_IV:              information value данной категории
+            *TOTAL_IV:              information value всей переменной
+    """
 
     has_target = target_name is not None
     if has_target:
-        report: SH_InformationValueReport.t = calc_iv_var(data, var_name, target_name, binning, map_values)
+        report: SH_InformationValueReport.t = calc_iv_var(data, var_name, target_name, map_values, binning)
     else:
         report: SH_GroupsStatReport.t = calc_var_groups_stat(data, var_name, map_values, binning)
 
@@ -44,12 +71,19 @@ def plot_var_stat(
             z = y
 
         if _mark_bar is None:
-            sns.barplot(
-                x=x, y=y,
-                ax=ax1, data=report, color=plot_config.color, hue=z,
-                palette=palette or None,
-                legend=False
-            )
+            if plot_config.color is not None:
+                sns.barplot(
+                    x=x, y=y,
+                    ax=ax1, data=report, color=plot_config.color,
+                    legend=False
+                )
+            else:
+                sns.barplot(
+                    x=x, y=y,
+                    ax=ax1, data=report, color=plot_config.color, hue=z,
+                    palette=palette or None,
+                    legend=False
+                )
         else:
             palette = sns.color_palette('Greys', 100).as_hex()
             marked_bar = [v == _mark_bar for v in x]
