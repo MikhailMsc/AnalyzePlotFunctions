@@ -7,3 +7,4 @@ Notebooks/
 *.csv
 */.ipynb_checkpoints
 .ipynb_checkpoints/
+*.png
