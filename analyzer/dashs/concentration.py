@@ -10,6 +10,7 @@ import seaborn as sns
 import warnings
 
 from analyzer.plots import PlotConfig, plot_var_stat
+from analyzer.plots.empty_plot import plot_empty_area
 from analyzer.preprocessing import BinningParams, preprocess_df
 from analyzer.stats import calc_concentration_report
 from analyzer.utils.domain.columns import C_GROUP_IV
@@ -302,7 +303,8 @@ class ConcentrationDash:
             if cnt_vars in [2, 3]:
                 _venn_diagram(stats_dict, segment.vars_vals, total_cnt)
             else:
-                pass # another plot
+                plot_empty_area(text='Визуализация перечения более 3х сегментов в разработке.',
+                                plot_config=PlotConfig(plot_size=(8, 4)))
 
             if self._with_dop_plots.value or cnt_vars == 1:
                 for var_name, var_value in segment.vars_vals:
