@@ -22,7 +22,6 @@ NONE_VALUE = 'None'
 
 
 def transaction(method):
-
     def wrapper(instance, *args, **kwargs):
         if not instance._transaction_start:
             instance._transaction_start = True
@@ -109,15 +108,6 @@ class VarStatDash:
             layout=widgets.Layout(width='15%')
         )
 
-        self._iv_button = widgets.Button(
-            description='Сортировать (IV)',
-            disabled=False,
-            button_style='info',  # 'success', 'info', 'warning', 'danger' or ''
-            tooltip='Сортировать (IV)',
-            icon='',
-            layout=widgets.Layout(width='10%', margin='0 0 0 3%')
-        )
-
         self._plot_output = widgets.Output(layout=OUTPUT_LAYOUT)
         self._table_output = widgets.Output(layout=OUTPUT_LAYOUT)
 
@@ -129,6 +119,8 @@ class VarStatDash:
         else:
             targets_names = [NONE_VALUE, ] + get_binary_columns(df)
 
+
+        default_target = targets_names[-1 if len(targets_names) == 2 else 0]
         self._target = widgets.Dropdown(
             options=targets_names,
             value=targets_names[-1 if len(targets_names) == 2 else 0],
@@ -136,6 +128,15 @@ class VarStatDash:
             disabled=False,
             layout=MAIN_LAYOUT
 
+        )
+
+        self._iv_button = widgets.Button(
+            description='Сортировать (IV)',
+            disabled=default_target == NONE_VALUE,
+            button_style='info',  # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Сортировать (IV)',
+            icon='',
+            layout=widgets.Layout(width='10%', margin='0 0 0 3%')
         )
 
         self._target.observe(lambda _: self._update_target(), names='value')
@@ -179,6 +180,11 @@ class VarStatDash:
         else:
             self._x2.value = [col for col in self._x2.options if _prepare_column_name(col) == x2_column][0]
 
+        if self._target.value == NONE_VALUE:
+            self._iv_button.disabled = True
+        else:
+            self._iv_button.disabled = False
+
     @transaction
     def _update_x1(self):
         if self._x1.value == NONE_VALUE:
@@ -221,7 +227,7 @@ class VarStatDash:
                 True
             )
 
-        with self._table_output:
+        with (self._table_output):
             self._table_output.clear_output()
             if report is not None:
                 if self._x2.value != NONE_VALUE and self._x1.value != NONE_VALUE:
@@ -229,7 +235,8 @@ class VarStatDash:
                         columns=[C_PARENT_MIN.n, C_PARENT_MAX.n, C_PARENT_MIN_TR.n, C_PARENT_MAX_TR.n],
                         inplace=True
                     )
-                elif self._x2.value != NONE_VALUE or self._x1.value != NONE_VALUE:
+                elif self._x2.value != NONE_VALUE or self._x1.value != NONE_VALUE \
+                        and C_VARNAME.n in report.columns:
                     report.drop(
                         columns=[C_VARNAME.n],
                         inplace=True
@@ -246,9 +253,9 @@ class VarStatDash:
             analyze_vars = [
                 clear_col for col in self._x1.options
                 if
-                    col != NONE_VALUE and
-                    '❌' not in col and
-                    (clear_col := _prepare_column_name(col)) != self._target.value
+                col != NONE_VALUE and
+                '❌' not in col and
+                (clear_col := _prepare_column_name(col)) != self._target.value
             ]
             stop_cols = [col for col in self._x1.options if '❌' in col]
 
@@ -257,9 +264,9 @@ class VarStatDash:
                 binning=BinningParams(min_prc=self._min_prc.value), _logging=False
             )
             vars_names = (
-                    total_iv_stats[C_TOTAL_IV.n].map(lambda x: f'({str(round(x, 1))}) ') +
-                    total_iv_stats[C_VARNAME.n]
-            ).to_list() + stop_cols
+                                 total_iv_stats[C_TOTAL_IV.n].map(lambda x: f'({str(round(x, 1))}) ') +
+                                 total_iv_stats[C_VARNAME.n]
+                         ).to_list() + stop_cols
 
             self._cache_iv_reports[key_report] = [NONE_VALUE, ] + vars_names
 
@@ -296,7 +303,7 @@ def _plot_func(df, var1, var2, target, min_prc, circles):
         df = preprocess_df(
             df, [var1, var2], ignore_vars=None, target_name=target,
             map_values=None, binning=BinningParams(min_prc=min_prc), drop_not_processed=False,
-            _validate_target=False,  _tqdm=False
+            _validate_target=False, _tqdm=False
         )
 
         cnt_groups = get_nunique(df, [var1, var2])

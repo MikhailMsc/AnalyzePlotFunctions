@@ -55,7 +55,7 @@ def calc_var_groups_stat(
 
 
 def _calc_var_groups_stat_pd(df: DataFrame, var_name: str):
-    df = df.groupby(var_name, as_index=False).size()
+    df = df.groupby(var_name, as_index=False, observed=True).size()
     df.columns = [C_GROUP.n, C_TOTAL.n]
 
     total_sum = df[C_TOTAL.n].sum()
